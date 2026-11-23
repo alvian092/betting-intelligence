@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.db.models import Fixture, ImportBatch, League, Season, Team
 from app.db.session import get_db
@@ -63,12 +63,14 @@ def export_sqlite_fixtures(db: Session = Depends(get_db)):
     connection.execute("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
     connection.execute("INSERT INTO metadata(key, value) VALUES ('schema_version', '1')")
     connection.execute("CREATE TABLE fixtures (date TEXT NOT NULL, league TEXT NOT NULL, season TEXT NOT NULL, home_team TEXT NOT NULL, away_team TEXT NOT NULL, home_goals INTEGER NOT NULL, away_goals INTEGER NOT NULL)")
+    HomeTeam = aliased(Team)
+    AwayTeam = aliased(Team)
     records = db.execute(
-        select(Fixture, Season, League, Team, Team)
+        select(Fixture, Season, League, HomeTeam, AwayTeam)
         .join(Season, Fixture.season_id == Season.id)
         .join(League, Season.league_id == League.id)
-        .join(Team, Fixture.home_team_id == Team.id)
-        .join(Team, Fixture.away_team_id == Team.id)
+        .join(HomeTeam, Fixture.home_team_id == HomeTeam.id)
+        .join(AwayTeam, Fixture.away_team_id == AwayTeam.id)
         .where(Fixture.home_goals.is_not(None), Fixture.away_goals.is_not(None))
         .order_by(Fixture.kickoff_at)
     ).all()
