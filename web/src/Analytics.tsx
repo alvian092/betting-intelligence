@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 type Option = { id: number; name: string };
 type MarketPair = { home: number; draw: number; away: number };
+type ValueResult = { bookmaker_margin_percent: number; selections: Array<{ name: string; no_vig_probability: number; model_fair_odds: number; ev: number; edge: number; recommended_stake_fraction: number; decision: "VALUE" | "NO_BET" }> };
 type Analysis = {
   model: string;
   status: string;
@@ -30,6 +31,10 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
   const [failed, setFailed] = useState(false);
+  const [odds, setOdds] = useState({ home: "", draw: "", away: "" });
+  const [valueResult, setValueResult] = useState<ValueResult | null>(null);
+  const [valueBusy, setValueBusy] = useState(false);
+  const [valueNotice, setValueNotice] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -50,6 +55,37 @@ export default function Analytics() {
   const canAnalyze = Boolean(leagueId && homeId && awayId && homeId !== awayId);
   const homeName = useMemo(() => teams.find((item) => String(item.id) === homeId)?.name || "Kandang", [teams, homeId]);
   const awayName = useMemo(() => teams.find((item) => String(item.id) === awayId)?.name || "Tandang", [teams, awayId]);
+
+  async function evaluateValue() {
+    if (!analysis || valueBusy) return;
+    const prices = [Number(odds.home), Number(odds.draw), Number(odds.away)];
+    if (prices.some((price) => !Number.isFinite(price) || price <= 1)) {
+      setValueNotice("Isi odds desimal valid (> 1.00) untuk Home, Draw, dan Away.");
+      setValueResult(null);
+      return;
+    }
+    setValueBusy(true); setValueNotice(""); setValueResult(null);
+    const probabilities = analysis.markets["1x2"];
+    const body = {
+      selections: [
+        { name: homeName, model_probability: probabilities.home, decimal_odds: prices[0] },
+        { name: "Draw", model_probability: probabilities.draw, decimal_odds: prices[1] },
+        { name: awayName, model_probability: probabilities.away, decimal_odds: prices[2] },
+      ],
+      fractional_kelly: 0.25,
+      min_ev: 0.02,
+    };
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/analytics/value`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(typeof payload.detail === "string" ? payload.detail : "Evaluasi odds gagal.");
+      setValueResult(payload as ValueResult);
+    } catch (error) {
+      setValueNotice(error instanceof Error ? error.message : "Tidak dapat mengevaluasi odds.");
+    } finally { setValueBusy(false); }
+  }
 
   async function runAnalysis() {
     if (!canAnalyze || busy) return;
@@ -108,6 +144,25 @@ export default function Analytics() {
           </div>
           <h3>Top correct score</h3>
           <div className="score-grid">{analysis.markets.top_correct_scores.slice(0, 6).map((item) => <div key={item.score}><b>{item.score}</b><span>{pct(item.probability)}</span></div>)}</div>
+          <div className="odds-value-panel">
+            <h3>Odds &amp; Value Engine</h3>
+            <p>Masukkan odds desimal bookmaker untuk pasar 1X2. Probabilitas model otomatis diambil dari hasil analisis di atas.</p>
+            <div className="odds-input-grid">
+              <label>Odds {homeName}<input inputMode="decimal" type="number" min="1.01" step="0.01" placeholder="2.10" value={odds.home} onChange={(event) => setOdds({ ...odds, home: event.target.value })} /></label>
+              <label>Odds Draw<input inputMode="decimal" type="number" min="1.01" step="0.01" placeholder="3.30" value={odds.draw} onChange={(event) => setOdds({ ...odds, draw: event.target.value })} /></label>
+              <label>Odds {awayName}<input inputMode="decimal" type="number" min="1.01" step="0.01" placeholder="3.50" value={odds.away} onChange={(event) => setOdds({ ...odds, away: event.target.value })} /></label>
+            </div>
+            <button className="primary" type="button" onClick={() => void evaluateValue()} disabled={valueBusy}>{valueBusy ? "Menghitung EV…" : "Hitung value & Kelly"} <span>→</span></button>
+            {valueNotice && <div className="notice warning" role="status">{valueNotice}</div>}
+            {valueResult && <>
+              <div className="value-summary"><span>Bookmaker margin</span><strong>{valueResult.bookmaker_margin_percent.toFixed(2)}%</strong><small>Margin dihapus dengan metode proporsional.</small></div>
+              <div className="value-results">{valueResult.selections.map((item) => <div className="value-row" key={item.name}>
+                <div><b>{item.name}</b><span>Fair odds model {item.model_fair_odds.toFixed(2)} · No-vig {pct(item.no_vig_probability)}</span></div>
+                <div className="value-metrics"><strong className={item.decision === "VALUE" ? "value-positive" : ""}>{item.decision === "VALUE" ? "VALUE" : "NO BET"}</strong><span>EV {pct(item.ev)} · Edge {pct(item.edge)}</span><span>¼ Kelly {pct(item.recommended_stake_fraction)}</span></div>
+              </div>)}</div>
+              <p className="value-disclaimer">VALUE hanya jika EV ≥ 2% dan edge positif. Kelly adalah fraksi estimasi bankroll, bukan jaminan hasil.</p>
+            </>}
+          </div>
           <div className="analysis-audit">
             <b>Status model: provisional / belum backtested</b>
             <span>Home sample: {analysis.data.home_team_matches} pertandingan · Away sample: {analysis.data.away_team_matches} pertandingan</span>
