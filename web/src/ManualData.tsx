@@ -78,7 +78,8 @@ export default function ManualData() {
     try {
       await request(`/${kind}/${item.id}`, { method: "DELETE" });
       setNotice("Data berhasil dihapus."); setError(false);
-      if (editing?.kind === kind.slice(0, -1) && editing.item.id === item.id) setEditing(null);
+      const editingKind = ({ countries: "country", leagues: "league", seasons: "season", teams: "team", fixtures: "fixture" } as const)[kind];
+      if (editing?.kind === editingKind && editing.item.id === item.id) setEditing(null);
       await refresh();
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "Gagal menghapus data."); setError(true);
