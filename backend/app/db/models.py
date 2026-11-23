@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -71,3 +71,34 @@ class ImportBatch(Base):
     invalid_rows: Mapped[int] = mapped_column(Integer, default=0)
     message: Mapped[str] = mapped_column(String(500), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, index=True)
+
+
+class Bookmaker(Base):
+    __tablename__ = "bookmakers"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    provider_key: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+
+class OddsQuote(Base):
+    __tablename__ = "odds_quotes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    fixture_id: Mapped[int] = mapped_column(ForeignKey("fixtures.id"), index=True)
+    bookmaker_id: Mapped[int] = mapped_column(ForeignKey("bookmakers.id"), index=True)
+    market: Mapped[str] = mapped_column(String(40), index=True)
+    selection: Mapped[str] = mapped_column(String(80))
+    line: Mapped[float | None] = mapped_column(Numeric(8, 3), nullable=True)
+    decimal_odds: Mapped[float] = mapped_column(Numeric(10, 4))
+    captured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    quote_type: Mapped[str] = mapped_column(String(20), index=True)
+    source: Mapped[str] = mapped_column(String(20), default="manual")
+    source_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    bookmaker: Mapped[Bookmaker] = relationship()
+    fixture: Mapped[Fixture] = relationship()
+    __table_args__ = (
+        UniqueConstraint("fixture_id", "bookmaker_id", "market", "selection", "line", "captured_at", name="uq_odds_quote_snapshot"),
+        Index("ix_odds_fixture_market_time", "fixture_id", "market", "captured_at"),
+    )
