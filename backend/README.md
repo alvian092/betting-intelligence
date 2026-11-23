@@ -12,16 +12,28 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r backend/requirements.txt
 cp .env.example .env
 cd backend
+alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
 Open http://127.0.0.1:8000/docs for the OpenAPI documentation.
 
-## Health check
+## Database
 
-`GET /api/v1/health`
+SQLAlchemy models define the initial reference-data schema:
 
-The current endpoint verifies that the API process is running. Database readiness will be added with the persistence layer.
+- Countries
+- Leagues
+- Seasons
+- Teams
+- Fixtures
+
+Alembic owns schema changes. After pulling updates, apply migrations from this directory with `alembic upgrade head`. The default local database is SQLite; PostgreSQL can be configured with `DATABASE_URL`.
+
+## Health checks
+
+- `GET /api/v1/health` checks that the API process is running.
+- `GET /api/v1/health/ready` checks database connectivity.
 
 ## Tests
 
@@ -29,5 +41,7 @@ From the repository root:
 
 ```bash
 cd backend
-pytest
+pytest -q
 ```
+
+CI applies all Alembic migrations to a temporary SQLite database before running the test suite.
