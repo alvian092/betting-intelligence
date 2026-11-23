@@ -71,3 +71,9 @@ Example response:
   "message": "CSV berhasil diproses"
 }
 ```
+
+## Excel fixture import
+
+Endpoint: `POST /api/v1/imports/fixtures/excel` (multipart form field: `file`; accepted file extension: `.xlsx`).
+
+Use the same required columns and validation rules as CSV. The importer reads the active worksheet, accepts Excel date cells or ISO date text, skips completely blank rows, and enforces the same 10 MB and 50,000-row limits. Duplicate fixtures are skipped. Any invalid row rejects the entire import with HTTP 422 and row-level details; no data is committed.
