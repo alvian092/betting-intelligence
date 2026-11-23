@@ -154,3 +154,42 @@ def _fixture_dict(item: Fixture) -> dict:
     return {"id": item.id, "season_id": item.season_id, "home_team_id": item.home_team_id,
             "away_team_id": item.away_team_id, "kickoff_at": item.kickoff_at.isoformat(),
             "status": item.status, "home_goals": item.home_goals, "away_goals": item.away_goals}
+
+
+
+def _delete_if_unused(db: Session, model, item_id: int, label: str, references: list[tuple[object, object]]) -> dict:
+    item = _not_found(db.get(model, item_id), label)
+    for related_model, foreign_key in references:
+        count = db.scalar(select(related_model).where(foreign_key == item_id).limit(1))
+        if count is not None:
+            raise HTTPException(status_code=409, detail=f"{label} tidak dapat dihapus karena masih digunakan oleh data terkait")
+    db.delete(item)
+    _commit(db)
+    return {"deleted": True, "id": item_id}
+
+
+@router.delete("/countries/{item_id}")
+def delete_country(item_id: int, db: Session = Depends(get_db)):
+    return _delete_if_unused(db, Country, item_id, "Negara", [(League, League.country_id)])
+
+
+@router.delete("/leagues/{item_id}")
+def delete_league(item_id: int, db: Session = Depends(get_db)):
+    return _delete_if_unused(db, League, item_id, "Liga", [(Season, Season.league_id)])
+
+
+@router.delete("/seasons/{item_id}")
+def delete_season(item_id: int, db: Session = Depends(get_db)):
+    return _delete_if_unused(db, Season, item_id, "Musim", [(Fixture, Fixture.season_id)])
+
+
+@router.delete("/teams/{item_id}")
+def delete_team(item_id: int, db: Session = Depends(get_db)):
+    return _delete_if_unused(db, Team, item_id, "Tim", [
+        (Fixture, Fixture.home_team_id), (Fixture, Fixture.away_team_id)
+    ])
+
+
+@router.delete("/fixtures/{item_id}")
+def delete_fixture(item_id: int, db: Session = Depends(get_db)):
+    return _delete_if_unused(db, Fixture, item_id, "Pertandingan", [])
