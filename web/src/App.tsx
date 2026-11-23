@@ -1,4 +1,4 @@
-import { ChangeEvent, DragEvent, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 
 type ImportResult = {
   status?: string;
@@ -9,7 +9,7 @@ type ImportResult = {
   message?: string;
 };
 
-type ApiError = {
+type ImportBatch = { id: number; filename: string; format: string; status: string; rows_received: number; imported: number; duplicates_skipped: number; invalid_rows: number; message: string; created_at: string; };\n\ntype ApiError = {
   detail?: {
     message?: string;
     invalid_rows?: Array<{ row: number; errors: string[] }>;
@@ -26,7 +26,7 @@ export default function App() {
   const [dragging, setDragging] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [errors, setErrors] = useState<Array<{ row: number; errors: string[] }>>([]);
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState("");\n  const [history, setHistory] = useState<ImportBatch[]>([]);\n  const [historyBusy, setHistoryBusy] = useState(false);\n\n  async function loadHistory() {\n    setHistoryBusy(true);\n    try { const response = await fetch(`${API_BASE}/api/v1/imports/history?limit=50`); if (!response.ok) throw new Error("history"); const data = await response.json(); setHistory(data.items || []); }\n    catch { setNotice("Riwayat impor belum dapat dimuat. Periksa koneksi API."); }\n    finally { setHistoryBusy(false); }\n  }\n\n  useEffect(() => { void loadHistory(); }, []);
 
   function chooseFile(candidate?: File) {
     setResult(null);
@@ -98,7 +98,7 @@ export default function App() {
           <span className="brand-mark">BI</span>
           <span>BETTING <b>INTELLIGENCE</b></span>
         </a>
-        <span className="status"><i /> DATA FOUNDATION</span>
+        <nav className="nav-links"><a href="#upload">IMPORT</a><a href="#history">RIWAYAT</a></nav>\n        <span className="status"><i /> DATA FOUNDATION</span>
       </header>
 
       <section className="intro">
@@ -107,7 +107,7 @@ export default function App() {
         <p className="lead">Impor hasil pertandingan dari CSV atau Excel. Data akan divalidasi dan diperiksa duplikasinya sebelum disimpan.</p>
       </section>
 
-      <section className="panel">
+      <section className="panel" id="upload">
         <div className="panel-heading">
           <div>
             <p className="eyebrow">01 / UPLOAD DATA</p>
@@ -169,7 +169,7 @@ export default function App() {
         )}
       </section>
 
-      <section className="rules">
+      <section className="panel history-panel" id="history">\n        <div className="panel-heading"><div><p className="eyebrow">02 / AUDIT TRAIL</p><h2>Riwayat impor</h2></div><button className="browse" type="button" onClick={() => void loadHistory()}>{historyBusy ? "Memuat…" : "↻ Segarkan"}</button></div>\n        {history.length === 0 ? <p className="empty-history">{historyBusy ? "Memuat riwayat…" : "Belum ada aktivitas impor."}</p> : <div className="history-list">{history.map((item) => <article className="history-item" key={item.id}><div className="history-main"><strong>{item.filename}</strong><span>{new Date(item.created_at).toLocaleString("id-ID")} · {item.format.toUpperCase()}</span></div><span className={`history-status ${item.status}`}>{item.status === "completed" ? "BERHASIL" : "GAGAL"}</span><div className="history-stats"><span>{item.rows_received} baris</span><span>{item.imported} baru</span><span>{item.duplicates_skipped} duplikat</span><span>{item.invalid_rows} invalid</span></div><p>{item.message}</p></article>)}</div>}\n      </section>\n\n      <section className="rules">
         <h2>Validasi otomatis</h2>
         <div className="rule-list">
           <div><span>01</span><p><b>Format tanggal</b><br />YYYY-MM-DD atau sel tanggal Excel.</p></div>
