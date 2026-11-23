@@ -1,4 +1,5 @@
 import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
+import ManualData from "./ManualData";
 
 type ImportResult = {
   status?: string;
@@ -111,7 +112,7 @@ export default function App() {
           <span className="brand-mark">BI</span>
           <span>BETTING <b>INTELLIGENCE</b></span>
         </a>
-        <nav className="nav-links"><a href="#upload">IMPORT</a><a href="#history">RIWAYAT</a></nav>
+        <nav className="nav-links"><a href="#manual">INPUT MANUAL</a><a href="#upload">IMPORT</a><a href="#history">RIWAYAT</a></nav>
         <span className="status"><i /> DATA FOUNDATION</span>
       </header>
 
@@ -121,7 +122,7 @@ export default function App() {
         <p className="lead">Impor hasil pertandingan dari CSV atau Excel. Data akan divalidasi dan diperiksa duplikasinya sebelum disimpan.</p>
       </section>
 
-      <section className="panel" id="upload">
+      <ManualData />\n\n      <section className="panel" id="upload">
         <div className="panel-heading">
           <div>
             <p className="eyebrow">01 / UPLOAD DATA</p>
