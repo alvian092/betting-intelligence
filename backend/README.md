@@ -45,3 +45,29 @@ pytest -q
 ```
 
 CI applies all Alembic migrations to a temporary SQLite database before running the test suite.
+
+## CSV fixture import (v1.0)
+
+Endpoint: `POST /api/v1/imports/fixtures/csv` (multipart form field: `file`).
+
+Required CSV header:
+
+```csv
+date,league,season,home_team,away_team,home_goals,away_goals
+2025-08-15,Premier League,2025-2026,Liverpool,Bournemouth,4,2
+```
+
+Dates must use `YYYY-MM-DD`; goals must be non-negative integers. Files are limited to 10 MB and 50,000 data rows. Duplicate fixtures are skipped and counted. If any row fails validation, the entire file is rejected with HTTP 422 and row-level details; no rows are committed. The endpoint creates missing league, season, and team reference records as needed.
+
+Example response:
+
+```json
+{
+  "status": "completed",
+  "rows_received": 1,
+  "imported": 1,
+  "duplicates_skipped": 0,
+  "invalid_rows": 0,
+  "message": "CSV berhasil diproses"
+}
+```
