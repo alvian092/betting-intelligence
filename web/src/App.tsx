@@ -34,9 +34,9 @@ export default function App() {
     setNotice("");
     if (!candidate) return;
     const ext = candidate.name.toLowerCase().split(".").pop();
-    if (ext !== "csv" && ext !== "xlsx") {
+    if (ext !== "csv" && ext !== "xlsx" && ext !== "sqlite") {
       setFile(null);
-      setNotice("Pilih file berformat .csv atau .xlsx.");
+      setNotice("Pilih file .csv, .xlsx, atau .sqlite.");
       return;
     }
     if (candidate.size > MAX_BYTES) {
@@ -63,7 +63,7 @@ export default function App() {
     setResult(null);
     setErrors([]);
     setNotice("");
-    const format = file.name.toLowerCase().endsWith(".csv") ? "csv" : "excel";
+    const format = file.name.toLowerCase().endsWith(".csv") ? "csv" : file.name.toLowerCase().endsWith(".sqlite") ? "sqlite" : "excel";
     const body = new FormData();
     body.append("file", file);
     try {
@@ -126,10 +126,10 @@ export default function App() {
           tabIndex={0}
           onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") inputRef.current?.click(); }}
         >
-          <input ref={inputRef} type="file" accept=".csv,.xlsx" onChange={onInputChange} hidden />
+          <input ref={inputRef} type="file" accept=".csv,.xlsx,.sqlite" onChange={onInputChange} hidden />
           <span className="upload-icon">↑</span>
           <strong>{file ? file.name : "Pilih file atau tarik ke area ini"}</strong>
-          <span>{file ? `${(file.size / 1024).toFixed(1)} KB · siap diimpor` : "Format yang didukung: CSV dan Excel (.xlsx)"}</span>
+          <span>{file ? `${(file.size / 1024).toFixed(1)} KB · siap diimpor` : "Format: CSV, Excel (.xlsx), SQLite (.sqlite)"}</span>
           <button className="browse" type="button" onClick={(event) => { event.stopPropagation(); inputRef.current?.click(); }}>Pilih file</button>
         </div>
 
@@ -169,7 +169,7 @@ export default function App() {
         )}
       </section>
 
-      <section className="panel history-panel" id="history">\n        <div className="panel-heading"><div><p className="eyebrow">02 / AUDIT TRAIL</p><h2>Riwayat impor</h2></div><button className="browse" type="button" onClick={() => void loadHistory()}>{historyBusy ? "Memuat…" : "↻ Segarkan"}</button></div>\n        {history.length === 0 ? <p className="empty-history">{historyBusy ? "Memuat riwayat…" : "Belum ada aktivitas impor."}</p> : <div className="history-list">{history.map((item) => <article className="history-item" key={item.id}><div className="history-main"><strong>{item.filename}</strong><span>{new Date(item.created_at).toLocaleString("id-ID")} · {item.format.toUpperCase()}</span></div><span className={`history-status ${item.status}`}>{item.status === "completed" ? "BERHASIL" : "GAGAL"}</span><div className="history-stats"><span>{item.rows_received} baris</span><span>{item.imported} baru</span><span>{item.duplicates_skipped} duplikat</span><span>{item.invalid_rows} invalid</span></div><p>{item.message}</p></article>)}</div>}\n      </section>\n\n      <section className="rules">
+      <section className="panel history-panel" id="history">\n        <div className="panel-heading"><div><p className="eyebrow">02 / AUDIT TRAIL</p><h2>Riwayat impor</h2></div><button className="browse" type="button" onClick={() => void loadHistory()}>{historyBusy ? "Memuat…" : "↻ Segarkan"}</button></div>\n        {history.length === 0 ? <p className="empty-history">{historyBusy ? "Memuat riwayat…" : "Belum ada aktivitas impor."}</p> : <div className="history-list">{history.map((item) => <article className="history-item" key={item.id}><div className="history-main"><strong>{item.filename}</strong><span>{new Date(item.created_at).toLocaleString("id-ID")} · {item.format.toUpperCase()}</span></div><span className={`history-status ${item.status}`}>{item.status === "completed" ? "BERHASIL" : "GAGAL"}</span><div className="history-stats"><span>{item.rows_received} baris</span><span>{item.imported} baru</span><span>{item.duplicates_skipped} duplikat</span><span>{item.invalid_rows} invalid</span></div><p>{item.message}</p></article>)}</div>}\n      </section>\n\n      <p className="sqlite-note">SQLite: impor menerima file hasil ekspor Betting Intelligence dengan skema versi 1. Database lain ditolak agar struktur data tetap aman.</p>\n\n      <section className="rules">
         <h2>Validasi otomatis</h2>
         <div className="rule-list">
           <div><span>01</span><p><b>Format tanggal</b><br />YYYY-MM-DD atau sel tanggal Excel.</p></div>
