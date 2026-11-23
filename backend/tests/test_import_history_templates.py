@@ -38,13 +38,13 @@ def test_templates_and_import_history():
             workbook.close()
 
             csv_data = (
-                "date,league,season,home_team,away_team,home_goals,away_goals\\n"
-                "2025-08-15,Premier League,2025-2026,Liverpool,Bournemouth,4,2\\n"
+                "date,league,season,home_team,away_team,home_goals,away_goals\n"
+                "2025-08-15,Premier League,2025-2026,Liverpool,Bournemouth,4,2\n"
             )
             uploaded = client.post("/api/v1/imports/fixtures/csv", files={"file": ("matches.csv", csv_data, "text/csv")})
             assert uploaded.status_code == 200
 
-            invalid = client.post("/api/v1/imports/fixtures/csv", files={"file": ("broken.csv", "bad\\n", "text/csv")})
+            invalid = client.post("/api/v1/imports/fixtures/csv", files={"file": ("broken.csv", "bad\n", "text/csv")})
             assert invalid.status_code == 422
 
             history = client.get("/api/v1/imports/history")
@@ -89,8 +89,8 @@ def test_sqlite_export_and_reimport_round_trip():
     try:
         with TestClient(app) as client:
             csv_data = (
-                "date,league,season,home_team,away_team,home_goals,away_goals\\n"
-                "2025-08-15,Premier League,2025-2026,Liverpool,Bournemouth,4,2\\n"
+                "date,league,season,home_team,away_team,home_goals,away_goals\n"
+                "2025-08-15,Premier League,2025-2026,Liverpool,Bournemouth,4,2\n"
             )
             created = client.post("/api/v1/imports/fixtures/csv", files={"file": ("matches.csv", csv_data, "text/csv")})
             assert created.status_code == 200
