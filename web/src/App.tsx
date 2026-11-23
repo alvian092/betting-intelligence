@@ -1,6 +1,7 @@
 import { ChangeEvent, DragEvent, useEffect, useRef, useState } from "react";
 import ManualData from "./ManualData";
 import Analytics from "./Analytics";
+import OddsDatabase from "./OddsDatabase";
 
 type ImportResult = {
   status?: string;
@@ -113,7 +114,7 @@ export default function App() {
           <span className="brand-mark">BI</span>
           <span>BETTING <b>INTELLIGENCE</b></span>
         </a>
-        <nav className="nav-links"><a href="#analysis">ANALISIS</a><a href="#manual">INPUT MANUAL</a><a href="#upload">IMPORT</a><a href="#history">RIWAYAT</a></nav>
+        <nav className="nav-links"><a href="#analysis">ANALISIS</a><a href="#odds-database">ODDS</a><a href="#manual">INPUT MANUAL</a><a href="#upload">IMPORT</a><a href="#history">RIWAYAT</a></nav>
         <span className="status"><i /> DATA FOUNDATION</span>
       </header>
 
@@ -124,6 +125,7 @@ export default function App() {
       </section>
 
       <Analytics />
+      <OddsDatabase />
       <ManualData />\n\n      <section className="panel" id="upload">
         <div className="panel-heading">
           <div>
