@@ -1,5 +1,4 @@
 from fastapi.testclient import TestClient
-
 from app.main import app
 
 client = TestClient(app)
@@ -18,3 +17,9 @@ def test_health_endpoint_returns_ok() -> None:
     assert payload["status"] == "ok"
     assert payload["service"] == "betting-intelligence-api"
     assert "timestamp" in payload
+
+
+def test_database_readiness_endpoint() -> None:
+    response = client.get("/api/v1/health/ready")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready", "database": "connected"}
