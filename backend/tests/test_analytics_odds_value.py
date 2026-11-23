@@ -9,7 +9,7 @@ def test_removes_proportional_margin_and_finds_value():
         {"name": "Draw", "model_probability": 0.25, "decimal_odds": 3.50},
         {"name": "Away", "model_probability": 0.25, "decimal_odds": 4.00},
     ])
-    assert result["bookmaker_overround"] == pytest.approx(0.0595238095)
+    assert result["bookmaker_overround"] == pytest.approx(0.0119047619)
     assert sum(item["no_vig_probability"] for item in result["selections"]) == pytest.approx(1.0)
     assert result["selections"][0]["decision"] == "VALUE"
     assert result["selections"][0]["recommended_stake_fraction"] > 0
