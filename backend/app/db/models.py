@@ -57,3 +57,17 @@ class Fixture(Base):
     __table_args__ = (
         UniqueConstraint("season_id", "home_team_id", "away_team_id", "kickoff_at", name="uq_fixture_identity"),
     )
+
+
+class ImportBatch(Base):
+    __tablename__ = "import_batches"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    filename: Mapped[str] = mapped_column(String(255))
+    file_format: Mapped[str] = mapped_column(String(10), index=True)
+    status: Mapped[str] = mapped_column(String(20), index=True)
+    rows_received: Mapped[int] = mapped_column(Integer, default=0)
+    imported: Mapped[int] = mapped_column(Integer, default=0)
+    duplicates_skipped: Mapped[int] = mapped_column(Integer, default=0)
+    invalid_rows: Mapped[int] = mapped_column(Integer, default=0)
+    message: Mapped[str] = mapped_column(String(500), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, index=True)
