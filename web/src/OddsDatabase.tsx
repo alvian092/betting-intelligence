@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 
 type FixtureOption = { id: number; season_id: number; home_team_id: number; away_team_id: number; kickoff_at: string; status: string };
 type Bookmaker = { id: number; name: string; provider_key: string | null; enabled: boolean };
+type ImportResult = { rows_received: number; imported: number; duplicates_skipped: number; invalid_rows: number; message: string };
 type Quote = { id: number; bookmaker_id: number; bookmaker_name: string; market: string; selection: string; line: string | null; decimal_odds: string; captured_at: string; quote_type: string; source: string };
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
@@ -23,7 +24,7 @@ export default function OddsDatabase() {
   const [newBookmaker, setNewBookmaker] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);\n  const [importFile, setImportFile] = useState<File | null>(null);\n  const [importFormat, setImportFormat] = useState("csv");\n  const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
   async function loadBase() {
     setLoading(true);
@@ -96,7 +97,7 @@ export default function OddsDatabase() {
     finally { setBusy(false); }
   }
 
-  const needsLine = ["totals", "asian_handicap", "team_total"].includes(market);
+  async function importOdds(event: FormEvent) {\n    event.preventDefault();\n    if (!importFile || busy) return;\n    setBusy(true); setNotice(""); setImportResult(null);\n    try {\n      const response = await fetch(`${API_BASE}/api/v1/odds/import/${importFormat}`, { method: "POST", body: (() => { const data = new FormData(); data.append("file", importFile); return data; })() });\n      const payload = await response.json();\n      if (!response.ok) {\n        const details = payload.detail;\n        const rows = details?.invalid_rows?.slice(0, 5).map((item: { row: number; errors: string[] }) => `Baris ${item.row}: ${item.errors.join(", ")}`).join(" | ");\n        throw new Error(rows || details?.message || details || "Impor odds gagal.");\n      }\n      setImportResult(payload); setImportFile(null);\n      const picker = document.getElementById("odds-import-file") as HTMLInputElement | null; if (picker) picker.value = "";\n      await loadQuotes();\n      setNotice("Impor odds selesai.");\n    } catch (error) { setNotice(error instanceof Error ? error.message : "Impor odds gagal."); }\n    finally { setBusy(false); }\n  }\n\n  const needsLine = ["totals", "asian_handicap", "team_total"].includes(market);
   return (
     <section className="panel odds-database-panel" id="odds-database">
       <div className="panel-heading">
@@ -132,6 +133,20 @@ export default function OddsDatabase() {
             <button className="primary" type="submit" disabled={busy || !fixtureId || !bookmakerId}>{busy ? "Menyimpan…" : "Simpan snapshot odds"} <span>→</span></button>
           </form>
         </div>
+      </div>
+      <div className="manual-card odds-import-card">
+        <h3>Impor odds massal · CSV / Excel</h3>
+        <p className="manual-footnote">Gunakan fixture_id dan nama bookmaker yang sudah terdaftar. Timestamp wajib menyertakan zona waktu, misalnya +07:00.</p>
+        <div className="download-links">
+          <a href={`${API_BASE}/api/v1/odds/templates/csv`}>↓ Template CSV</a>
+          <a href={`${API_BASE}/api/v1/odds/templates/excel`}>↓ Template Excel</a>
+        </div>
+        <form className="odds-import-form" onSubmit={importOdds}>
+          <label>Format<select value={importFormat} onChange={(event) => setImportFormat(event.target.value)}><option value="csv">CSV</option><option value="excel">Excel (.xlsx)</option></select></label>
+          <label>File odds<input id="odds-import-file" type="file" accept={importFormat === "csv" ? ".csv,text/csv" : ".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"} onChange={(event) => setImportFile(event.target.files?.[0] || null)} /></label>
+          <button className="browse" type="submit" disabled={busy || !importFile}>{busy ? "Mengimpor…" : "Impor file odds"}</button>
+        </form>
+        {importResult && <div className="result-grid odds-import-result"><div><span>Baris diterima</span><strong>{importResult.rows_received}</strong></div><div><span>Berhasil masuk</span><strong>{importResult.imported}</strong></div><div><span>Duplikat dilewati</span><strong>{importResult.duplicates_skipped}</strong></div></div>}
       </div>
       {notice && <div className="notice" role="status">{notice}</div>}
       <div className="odds-db-history">
