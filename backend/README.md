@@ -77,3 +77,14 @@ Example response:
 Endpoint: `POST /api/v1/imports/fixtures/excel` (multipart form field: `file`; accepted file extension: `.xlsx`).
 
 Use the same required columns and validation rules as CSV. The importer reads the active worksheet, accepts Excel date cells or ISO date text, skips completely blank rows, and enforces the same 10 MB and 50,000-row limits. Duplicate fixtures are skipped. Any invalid row rejects the entire import with HTTP 422 and row-level details; no data is committed.
+
+
+## Templates, history, and SQLite
+
+- `GET /api/v1/imports/templates/fixtures.csv` downloads the CSV template.
+- `GET /api/v1/imports/templates/fixtures.xlsx` downloads the Excel template.
+- `GET /api/v1/imports/history?limit=50` returns the latest import batches (maximum 100).
+- `GET /api/v1/imports/fixtures/export.sqlite` exports completed fixture results to a portable SQLite database.
+- `POST /api/v1/imports/fixtures/sqlite` imports a SQLite export (multipart field: `file`).
+
+SQLite import is intentionally restricted to the Betting Intelligence export schema version 1. It opens the uploaded database read-only, checks integrity and exact table/column structure, and limits imports to 50,000 rows. Arbitrary SQLite databases are rejected. CSV, XLSX, and SQLite imports are recorded in the import history, including validation failures.
