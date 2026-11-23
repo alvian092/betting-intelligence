@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Android
+.gradle/
+**/build/
+local.properties
+*.jks
+*.keystore
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
