@@ -62,7 +62,7 @@ export default function ManualData() {
   const text = (form: FormData, key: string) => String(form.get(key) || "").trim();
   const number = (form: FormData, key: string) => Number(form.get(key));
   const optional = (value: string) => value || null;
-  const label = (items: Item[], id?: number) => items.find((item) => item.id === id)?.name || `#${id ?? "?"}`;
+  const label = (items: Item[], id?: number | null) => items.find((item) => item.id === id)?.name || `#${id ?? "?"}`;
 
   return (
     <section className="panel manual-panel" id="manual">
