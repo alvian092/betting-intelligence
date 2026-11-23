@@ -96,7 +96,7 @@ def test_sqlite_export_and_reimport_round_trip():
             assert created.status_code == 200
             exported = client.get("/api/v1/imports/fixtures/export.sqlite")
             assert exported.status_code == 200
-            assert exported.content[:16] == b"SQLite format 3\\x00"
+            assert exported.content[:16] == b"SQLite format 3\x00"
             imported = client.post("/api/v1/imports/fixtures/sqlite", files={"file": ("backup.sqlite", exported.content, "application/vnd.sqlite3")})
             assert imported.status_code == 200
             assert imported.json()["imported"] == 0
