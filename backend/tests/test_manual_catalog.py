@@ -45,7 +45,7 @@ def test_manual_catalog_crud_and_validation():
             assert client.get("/api/v1/catalog/fixtures?team_id=" + str(home.json()["id"])).json()[0]["home_goals"] == 4
             bad = dict(fixture_payload, away_team_id=home.json()["id"])
             assert client.post("/api/v1/catalog/fixtures", json=bad).status_code == 422
-            assert client.put("/api/v1/catalog/teams/999", json={"name": "Unknown"}).status_code == 422
+            assert client.put("/api/v1/catalog/teams/999", json={"name": "Unknown"}).status_code == 404
     finally:
         app.dependency_overrides.clear()
         Base.metadata.drop_all(bind=engine)
