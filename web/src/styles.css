@@ -198,3 +198,26 @@ button.secondary:disabled{opacity:.45;cursor:not-allowed}
 .backtest-results p{margin:12px 0 5px;font-size:10px;color:#d9b98b;line-height:1.5}
 .backtest-results>small{font-size:9px;color:#96a6b8;line-height:1.5;display:block}
 @media(max-width:640px){.backtest-launch{align-items:flex-start;flex-direction:column}.backtest-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Historical odds database */
+.odds-database-panel{margin:0 0 22px}
+.odds-db-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:12px}
+.odds-db-grid .manual-card{height:fit-content}
+.odds-db-grid .manual-card form{display:grid;gap:10px}
+.odds-db-grid label,.odds-db-select{display:grid;gap:5px;color:#9eacbc;font-size:10px}
+.odds-db-grid input,.odds-db-grid select{width:100%;min-width:0;height:38px;padding:8px 9px;border:1px solid #344454;border-radius:5px;background:#111d2a;color:#edf2f7;font:12px 'DM Sans',sans-serif}
+.odds-db-grid input:focus,.odds-db-grid select:focus{outline:1px solid #c9ad78;border-color:#c9ad78}
+.odds-db-select{margin-top:16px}
+.odds-db-form-card .primary{margin-top:4px}
+.odds-db-history{margin-top:18px;padding-top:16px;border-top:1px solid #293746}
+.odds-db-history-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.odds-db-history-heading b{font-size:12px}
+.odds-quote-list{display:grid;gap:7px}
+.odds-quote-list article{display:grid;grid-template-columns:1fr auto;gap:5px 12px;align-items:center;padding:11px;background:#0d1722;border:1px solid #2a3948;border-radius:6px}
+.odds-quote-list article>div{display:grid;gap:4px;min-width:0}
+.odds-quote-list b{font-size:11px}
+.odds-quote-list span,.odds-quote-list small{font-size:9px;color:#91a2b5}
+.odds-quote-list strong{font-family:'DM Mono';font-size:14px;color:#d4b477}
+.odds-quote-list small{grid-column:1/-1}
+@media(max-width:640px){.odds-db-grid{grid-template-columns:1fr}.odds-db-history-heading{align-items:flex-start}}
