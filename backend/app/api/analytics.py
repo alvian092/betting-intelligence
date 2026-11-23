@@ -46,3 +46,19 @@ def get_pre_match_analysis(
         return analyze_pre_match(estimate, rho=rho, max_goals=max_goals)
     except (InsufficientHistoryError, ValueError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+from app.schemas.odds_value import OddsValueIn
+from app.services.analytics.odds_value import evaluate_odds_value
+
+
+@router.post("/value")
+def post_odds_value(payload: OddsValueIn):
+    """Compare bookmaker decimal odds with model probabilities."""
+    try:
+        return evaluate_odds_value(
+            [item.model_dump() for item in payload.selections],
+            fractional_kelly=payload.fractional_kelly,
+            min_ev=payload.min_ev,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
