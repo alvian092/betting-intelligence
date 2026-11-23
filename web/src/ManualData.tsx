@@ -12,6 +12,9 @@ export default function ManualData() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
+  const [fixtureSeason, setFixtureSeason] = useState("");
+  const [fixtureTeam, setFixtureTeam] = useState("");
+  const [fixtureStatus, setFixtureStatus] = useState("");
   const [editing, setEditing] = useState<{ kind: "country" | "league" | "season" | "team" | "fixture"; item: Item } | null>(null);
   const api = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
 
@@ -134,7 +137,8 @@ export default function ManualData() {
             <div className="form-pair"><label>Status<select name="status" defaultValue="scheduled"><option value="scheduled">Terjadwal</option><option value="live">Live</option><option value="finished">Selesai</option><option value="postponed">Ditunda</option><option value="cancelled">Dibatalkan</option></select></label><label>Skor kandang / tandang<div className="score-inputs"><input name="home_goals" type="number" min="0" placeholder="0" /><input name="away_goals" type="number" min="0" placeholder="0" /></div></label></div>
             <button className="browse" disabled={busy || !data.seasons.length || data.teams.length < 2}>Simpan pertandingan</button>
           </form>
-          <div className="fixture-list">{data.fixtures.filter((x) => matches(label(data.teams,x.home_team_id), label(data.teams,x.away_team_id), x.status, x.kickoff_at)).slice(0,8).map((x) => <div key={x.id}><strong>{label(data.teams,x.home_team_id)} vs {label(data.teams,x.away_team_id)}</strong><small>{x.kickoff_at ? new Date(x.kickoff_at).toLocaleString("id-ID") : ""} · {x.status} {x.home_goals !== null && x.home_goals !== undefined ? `· ${x.home_goals}-${x.away_goals}` : ""}</small><button type="button" className="edit-link" onClick={() => setEditing({kind:"fixture",item:x})}>Edit</button></div>)}</div>
+          <div className="fixture-filters"><label>Musim<select value={fixtureSeason} onChange={(e) => setFixtureSeason(e.target.value)}><option value="">Semua musim</option>{data.seasons.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label><label>Tim<select value={fixtureTeam} onChange={(e) => setFixtureTeam(e.target.value)}><option value="">Semua tim</option>{data.teams.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label><label>Status<select value={fixtureStatus} onChange={(e) => setFixtureStatus(e.target.value)}><option value="">Semua status</option><option value="scheduled">Terjadwal</option><option value="live">Live</option><option value="finished">Selesai</option><option value="postponed">Ditunda</option><option value="cancelled">Dibatalkan</option></select></label></div>
+          <div className="fixture-list">{data.fixtures.filter((x) => matches(label(data.teams,x.home_team_id), label(data.teams,x.away_team_id), x.status, x.kickoff_at) && (!fixtureSeason || String(x.season_id) === fixtureSeason) && (!fixtureTeam || String(x.home_team_id) === fixtureTeam || String(x.away_team_id) === fixtureTeam) && (!fixtureStatus || x.status === fixtureStatus)).slice(0,8).map((x) => <div key={x.id}><strong>{label(data.teams,x.home_team_id)} vs {label(data.teams,x.away_team_id)}</strong><small>{x.kickoff_at ? new Date(x.kickoff_at).toLocaleString("id-ID") : ""} · {x.status} {x.home_goals !== null && x.home_goals !== undefined ? `· ${x.home_goals}-${x.away_goals}` : ""}</small><button type="button" className="edit-link" onClick={() => setEditing({kind:"fixture",item:x})}>Edit</button></div>)}</div>
         </article>
       </div>
       <ManualEditor editing={editing} data={data} request={request} refresh={refresh} close={() => setEditing(null)} notify={(message, failed = false) => { setNotice(message); setError(failed); }} />
