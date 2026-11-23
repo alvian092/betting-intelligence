@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import ManualEditor from "./ManualEditor";
 
 type Item = { id: number; name?: string; code?: string | null; country_id?: number | null; league_id?: number; season_id?: number; country_code?: string | null; external_id?: string | null; start_date?: string | null; end_date?: string | null; home_team_id?: number; away_team_id?: number; kickoff_at?: string; status?: string; home_goals?: number | null; away_goals?: number | null };
 type Catalog = { countries: Item[]; leagues: Item[]; seasons: Item[]; teams: Item[]; fixtures: Item[] };
@@ -10,6 +11,8 @@ export default function ManualData() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [error, setError] = useState(false);
+  const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<{ kind: "country" | "league" | "season" | "team" | "fixture"; item: Item } | null>(null);
   const api = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
 
   const request = useCallback(async (path: string, init?: RequestInit) => {
@@ -63,6 +66,7 @@ export default function ManualData() {
   const number = (form: FormData, key: string) => Number(form.get(key));
   const optional = (value: string) => value || null;
   const label = (items: Item[], id?: number | null) => items.find((item) => item.id === id)?.name || `#${id ?? "?"}`;
+  const matches = (...values: (string | number | null | undefined)[]) => values.join(" ").toLowerCase().includes(search.trim().toLowerCase());
 
   return (
     <section className="panel manual-panel" id="manual">
@@ -70,7 +74,8 @@ export default function ManualData() {
         <div><p className="eyebrow">02 / MASTER DATA</p><h2>Input data manual</h2></div>
         <button className="browse" type="button" onClick={() => void refresh()} disabled={busy}>{busy ? "Memuat…" : "↻ Segarkan"}</button>
       </div>
-      <p className="manual-lead">Tambahkan negara, liga, musim, tim, dan jadwal pertandingan. Isi data master lebih dulu agar pilihan relasi tersedia.</p>
+      <p className="manual-lead">Tambahkan atau perbarui negara, liga, musim, tim, dan jadwal pertandingan. Gunakan pencarian untuk menyaring daftar.</p>
+      <label className="manual-search">Cari data master<input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari negara, liga, musim, tim, atau pertandingan…" /></label>
       {notice && <div className={`notice ${error ? "warning" : "success"}`} role="status">{notice}</div>}
 
       <div className="manual-grid">
@@ -81,7 +86,7 @@ export default function ManualData() {
             <label>Kode negara<input name="code" placeholder="ID" maxLength={3} /></label>
             <button className="browse" disabled={busy}>Simpan negara</button>
           </form>
-          <ul className="mini-list">{data.countries.slice(0,8).map((x) => <li key={x.id}>{x.name}<small>{x.code || "—"}</small></li>)}</ul>
+          <ul className="mini-list">{data.countries.filter((x) => matches(x.name, x.code)).slice(0,8).map((x) => <li key={x.id}><span>{x.name}<small>{x.code || "—"}</small></span><button type="button" className="edit-link" onClick={() => setEditing({kind:"country",item:x})}>Edit</button></li>)}</ul>
         </article>
 
         <article className="manual-card">
@@ -92,7 +97,7 @@ export default function ManualData() {
             <label>ID eksternal<input name="external_id" placeholder="Opsional" /></label>
             <button className="browse" disabled={busy}>Simpan liga</button>
           </form>
-          <ul className="mini-list">{data.leagues.slice(0,8).map((x) => <li key={x.id}>{x.name}<small>{label(data.countries,x.country_id)}</small></li>)}</ul>
+          <ul className="mini-list">{data.leagues.filter((x) => matches(x.name, label(data.countries,x.country_id))).slice(0,8).map((x) => <li key={x.id}><span>{x.name}<small>{label(data.countries,x.country_id)}</small></span><button type="button" className="edit-link" onClick={() => setEditing({kind:"league",item:x})}>Edit</button></li>)}</ul>
         </article>
 
         <article className="manual-card">
@@ -103,7 +108,7 @@ export default function ManualData() {
             <div className="form-pair"><label>Mulai<input name="start_date" type="date" /></label><label>Selesai<input name="end_date" type="date" /></label></div>
             <button className="browse" disabled={busy || data.leagues.length === 0}>Simpan musim</button>
           </form>
-          <ul className="mini-list">{data.seasons.slice(0,8).map((x) => <li key={x.id}>{x.name}<small>{label(data.leagues,x.league_id)}</small></li>)}</ul>
+          <ul className="mini-list">{data.seasons.filter((x) => matches(x.name, label(data.leagues,x.league_id))).slice(0,8).map((x) => <li key={x.id}><span>{x.name}<small>{label(data.leagues,x.league_id)}</small></span><button type="button" className="edit-link" onClick={() => setEditing({kind:"season",item:x})}>Edit</button></li>)}</ul>
         </article>
 
         <article className="manual-card">
@@ -114,7 +119,7 @@ export default function ManualData() {
             <label>ID eksternal<input name="external_id" placeholder="Opsional" /></label>
             <button className="browse" disabled={busy}>Simpan tim</button>
           </form>
-          <ul className="mini-list">{data.teams.slice(0,8).map((x) => <li key={x.id}>{x.name}<small>{x.country_code || "—"}</small></li>)}</ul>
+          <ul className="mini-list">{data.teams.filter((x) => matches(x.name, x.country_code)).slice(0,8).map((x) => <li key={x.id}><span>{x.name}<small>{x.country_code || "—"}</small></span><button type="button" className="edit-link" onClick={() => setEditing({kind:"team",item:x})}>Edit</button></li>)}</ul>
         </article>
 
         <article className="manual-card fixture-card">
@@ -129,10 +134,11 @@ export default function ManualData() {
             <div className="form-pair"><label>Status<select name="status" defaultValue="scheduled"><option value="scheduled">Terjadwal</option><option value="live">Live</option><option value="finished">Selesai</option><option value="postponed">Ditunda</option><option value="cancelled">Dibatalkan</option></select></label><label>Skor kandang / tandang<div className="score-inputs"><input name="home_goals" type="number" min="0" placeholder="0" /><input name="away_goals" type="number" min="0" placeholder="0" /></div></label></div>
             <button className="browse" disabled={busy || !data.seasons.length || data.teams.length < 2}>Simpan pertandingan</button>
           </form>
-          <div className="fixture-list">{data.fixtures.slice(0,8).map((x) => <div key={x.id}><strong>{label(data.teams,x.home_team_id)} vs {label(data.teams,x.away_team_id)}</strong><small>{x.kickoff_at ? new Date(x.kickoff_at).toLocaleString("id-ID") : ""} · {x.status} {x.home_goals !== null && x.home_goals !== undefined ? `· ${x.home_goals}-${x.away_goals}` : ""}</small></div>)}</div>
+          <div className="fixture-list">{data.fixtures.filter((x) => matches(label(data.teams,x.home_team_id), label(data.teams,x.away_team_id), x.status, x.kickoff_at)).slice(0,8).map((x) => <div key={x.id}><strong>{label(data.teams,x.home_team_id)} vs {label(data.teams,x.away_team_id)}</strong><small>{x.kickoff_at ? new Date(x.kickoff_at).toLocaleString("id-ID") : ""} · {x.status} {x.home_goals !== null && x.home_goals !== undefined ? `· ${x.home_goals}-${x.away_goals}` : ""}</small><button type="button" className="edit-link" onClick={() => setEditing({kind:"fixture",item:x})}>Edit</button></div>)}</div>
         </article>
       </div>
-      <p className="manual-footnote">Daftar menampilkan hingga 8 item terbaru/teratas per kategori. API mendukung pembaruan data; fitur edit dan hapus akan ditambahkan pada iterasi berikutnya.</p>
+      <ManualEditor editing={editing} data={data} request={request} refresh={refresh} close={() => setEditing(null)} notify={(message, failed = false) => { setNotice(message); setError(failed); }} />
+      <p className="manual-footnote">Daftar menampilkan hingga 8 hasil per kategori. Pencarian menyaring data yang sudah dimuat; gunakan tombol Edit untuk memperbarui item.</p>
     </section>
   );
 }
