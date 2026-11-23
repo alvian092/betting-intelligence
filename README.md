@@ -133,7 +133,7 @@ Early foundation stage. Features described above are project goals and are not a
 
 ## Web app (development)
 
-The initial React + TypeScript import interface lives in `web/`.
+The React + TypeScript import interface lives in `web/`. It supports CSV, XLSX, and the application's versioned SQLite export format, downloadable templates, and import history.
 
 ```bash
 cd web
@@ -144,4 +144,4 @@ npm run dev
 
 By default the web app calls the API at `http://localhost:8000`. Change `VITE_API_BASE_URL` in `web/.env` when using another backend URL. Start the backend separately using the instructions in `backend/README.md`.
 
-The import screen accepts CSV and XLSX files and displays import counts or row-level validation errors returned by the backend. The API remains the source of truth for validation and duplicate detection.
+The import screen accepts CSV, XLSX, and SQLite files and displays import counts or row-level validation errors returned by the backend. CSV and Excel templates are downloadable from the screen; the history section lists completed and failed imports. SQLite imports accept only the versioned Betting Intelligence export schema. The API remains the source of truth for validation and duplicate detection.
