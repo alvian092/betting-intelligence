@@ -221,3 +221,16 @@ button.secondary:disabled{opacity:.45;cursor:not-allowed}
 .odds-quote-list strong{font-family:'DM Mono';font-size:14px;color:#d4b477}
 .odds-quote-list small{grid-column:1/-1}
 @media(max-width:640px){.odds-db-grid{grid-template-columns:1fr}.odds-db-history-heading{align-items:flex-start}}
+
+
+/* Bulk historical odds import */
+.odds-import-card{margin-top:14px}
+.odds-import-card>h3{margin-bottom:8px}
+.odds-import-card .manual-footnote{margin:0}
+.odds-import-form{display:grid;grid-template-columns:minmax(100px,.35fr) minmax(0,1fr) auto;gap:10px;align-items:end;margin-top:14px}
+.odds-import-form label{display:grid;gap:6px;color:#9eacbc;font-size:10px}
+.odds-import-form select,.odds-import-form input{width:100%;min-width:0;height:38px;padding:8px 9px;border:1px solid #344454;border-radius:5px;background:#111d2a;color:#edf2f7;font:11px 'DM Sans',sans-serif}
+.odds-import-form .browse{margin:0;white-space:nowrap}
+.odds-import-result{grid-template-columns:repeat(3,minmax(0,1fr))}
+.odds-import-result strong{font-size:20px}
+@media(max-width:640px){.odds-import-form{grid-template-columns:1fr}.odds-import-form .browse{justify-self:start}.odds-import-result{grid-template-columns:repeat(3,minmax(0,1fr))}}
