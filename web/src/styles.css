@@ -157,3 +157,26 @@ footer span{color:#c1a878}
 .analysis-audit{display:grid;gap:7px;margin-top:18px;padding:14px;border:1px solid #594b35;background:#211f1a;border-radius:6px;color:#b6a98f;font-size:10px;line-height:1.6;overflow-wrap:anywhere}
 .analysis-audit b{color:#e5c58e}
 @media(max-width:640px){.analysis-selectors{grid-template-columns:1fr}.lambda-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.lambda-grid>div{padding:10px 8px}.lambda-grid strong{font-size:20px}.market-grid,.market-grid-two{grid-template-columns:repeat(2,minmax(0,1fr))}.score-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nav-links{overflow-x:auto}}
+
+
+/* Odds & value */
+.odds-value-panel{margin-top:22px;padding:16px;border:1px solid #66563b;border-radius:8px;background:#171d24}
+.odds-value-panel>h3{margin-top:0}
+.odds-value-panel>p{font-size:11px;line-height:1.6;color:#9eacbc}
+.odds-input-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.odds-input-grid label{display:grid;gap:6px;color:#a9b6c3;font-size:10px}
+.odds-input-grid input{width:100%;min-width:0;height:40px;padding:8px 10px;border:1px solid #465466;border-radius:5px;background:#0d1722;color:#edf2f7;font:13px 'DM Mono',monospace}
+.odds-input-grid input:focus{outline:1px solid #c9ad78;border-color:#c9ad78}
+.value-summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding:12px;background:#0d1722;border:1px solid #2a3948;border-radius:6px}
+.value-summary span,.value-summary small{font-size:10px;color:#91a2b5}
+.value-summary strong{font-family:Manrope,sans-serif;color:#d4b477;font-size:20px}
+.value-results{display:grid;gap:8px;margin-top:10px}
+.value-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px;background:#0d1722;border:1px solid #2a3948;border-radius:6px}
+.value-row>div:first-child{display:grid;gap:5px;min-width:0}
+.value-row b{font-size:12px;overflow-wrap:anywhere}
+.value-row span{font-size:10px;color:#91a2b5;line-height:1.5}
+.value-metrics{display:grid;justify-items:end;gap:4px;flex-shrink:0}
+.value-metrics strong{font-family:'DM Mono';font-size:10px;color:#e7b68a}
+.value-metrics strong.value-positive{color:#91d5ae}
+.value-disclaimer{font-size:10px;color:#9eacbc;line-height:1.6;margin:12px 0 0}
+@media(max-width:640px){.odds-input-grid{grid-template-columns:1fr}.value-row{align-items:flex-start;flex-direction:column}.value-metrics{justify-items:start}.value-summary{align-items:flex-start;flex-direction:column;gap:5px}}
