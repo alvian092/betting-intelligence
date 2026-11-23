@@ -24,7 +24,10 @@ export default function OddsDatabase() {
   const [newBookmaker, setNewBookmaker] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);\n  const [importFile, setImportFile] = useState<File | null>(null);\n  const [importFormat, setImportFormat] = useState("csv");\n  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importFormat, setImportFormat] = useState("csv");
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
   async function loadBase() {
     setLoading(true);
@@ -97,7 +100,27 @@ export default function OddsDatabase() {
     finally { setBusy(false); }
   }
 
-  async function importOdds(event: FormEvent) {\n    event.preventDefault();\n    if (!importFile || busy) return;\n    setBusy(true); setNotice(""); setImportResult(null);\n    try {\n      const response = await fetch(`${API_BASE}/api/v1/odds/import/${importFormat}`, { method: "POST", body: (() => { const data = new FormData(); data.append("file", importFile); return data; })() });\n      const payload = await response.json();\n      if (!response.ok) {\n        const details = payload.detail;\n        const rows = details?.invalid_rows?.slice(0, 5).map((item: { row: number; errors: string[] }) => `Baris ${item.row}: ${item.errors.join(", ")}`).join(" | ");\n        throw new Error(rows || details?.message || details || "Impor odds gagal.");\n      }\n      setImportResult(payload); setImportFile(null);\n      const picker = document.getElementById("odds-import-file") as HTMLInputElement | null; if (picker) picker.value = "";\n      await loadQuotes();\n      setNotice("Impor odds selesai.");\n    } catch (error) { setNotice(error instanceof Error ? error.message : "Impor odds gagal."); }\n    finally { setBusy(false); }\n  }\n\n  const needsLine = ["totals", "asian_handicap", "team_total"].includes(market);
+  async function importOdds(event: FormEvent) {
+    event.preventDefault();
+    if (!importFile || busy) return;
+    setBusy(true); setNotice(""); setImportResult(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/odds/import/${importFormat}`, { method: "POST", body: (() => { const data = new FormData(); data.append("file", importFile); return data; })() });
+      const payload = await response.json();
+      if (!response.ok) {
+        const details = payload.detail;
+        const rows = details?.invalid_rows?.slice(0, 5).map((item: { row: number; errors: string[] }) => `Baris ${item.row}: ${item.errors.join(", ")}`).join(" | ");
+        throw new Error(rows || details?.message || details || "Impor odds gagal.");
+      }
+      setImportResult(payload); setImportFile(null);
+      const picker = document.getElementById("odds-import-file") as HTMLInputElement | null; if (picker) picker.value = "";
+      await loadQuotes();
+      setNotice("Impor odds selesai.");
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Impor odds gagal."); }
+    finally { setBusy(false); }
+  }
+
+  const needsLine = ["totals", "asian_handicap", "team_total"].includes(market);
   return (
     <section className="panel odds-database-panel" id="odds-database">
       <div className="panel-heading">
