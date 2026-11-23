@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 type Option = { id: number; name: string };
 type MarketPair = { home: number; draw: number; away: number };
 type ValueResult = { bookmaker_margin_percent: number; selections: Array<{ name: string; no_vig_probability: number; model_fair_odds: number; ev: number; edge: number; recommended_stake_fraction: number; decision: "VALUE" | "NO_BET" }> };
+type BacktestResult = { fixtures_considered: number; predictions_evaluated: number; fixtures_skipped_insufficient_history: number; period: { from: string | null; to: string | null }; metrics: { accuracy_1x2: number | null; brier_score_1x2: number | null; log_loss_1x2: number | null; top_correct_score_hit_rate: number | null }; financial_metrics: { roi: number | null; yield: number | null; max_drawdown: number | null; clv: number | null; unavailable_reason: string } };
 type Analysis = {
   model: string;
   status: string;
@@ -35,6 +36,9 @@ export default function Analytics() {
   const [valueResult, setValueResult] = useState<ValueResult | null>(null);
   const [valueBusy, setValueBusy] = useState(false);
   const [valueNotice, setValueNotice] = useState("");
+  const [backtest, setBacktest] = useState<BacktestResult | null>(null);
+  const [backtestBusy, setBacktestBusy] = useState(false);
+  const [backtestNotice, setBacktestNotice] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -55,6 +59,19 @@ export default function Analytics() {
   const canAnalyze = Boolean(leagueId && homeId && awayId && homeId !== awayId);
   const homeName = useMemo(() => teams.find((item) => String(item.id) === homeId)?.name || "Kandang", [teams, homeId]);
   const awayName = useMemo(() => teams.find((item) => String(item.id) === awayId)?.name || "Tandang", [teams, awayId]);
+
+  async function runBacktest() {
+    if (!leagueId || backtestBusy) return;
+    setBacktestBusy(true); setBacktest(null); setBacktestNotice("");
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/analytics/backtest?league_id=${encodeURIComponent(leagueId)}`);
+      const payload = await response.json();
+      if (!response.ok) throw new Error(typeof payload.detail === "string" ? payload.detail : "Backtesting gagal dijalankan.");
+      setBacktest(payload as BacktestResult);
+    } catch (error) {
+      setBacktestNotice(error instanceof Error ? error.message : "Tidak dapat menjalankan backtesting.");
+    } finally { setBacktestBusy(false); }
+  }
 
   async function evaluateValue() {
     if (!analysis || valueBusy) return;
@@ -116,6 +133,22 @@ export default function Analytics() {
         <label>Tim tandang<select value={awayId} onChange={(event) => { setAwayId(event.target.value); setAnalysis(null); }} disabled={loading}><option value="">Pilih tim tandang</option>{teams.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       </div>
       {selectedLeague && <p className="analysis-context">Liga dipilih: <b>{selectedLeague.name}</b> · {teams.length} tim tersedia</p>}
+      <div className="backtest-launch">
+        <div><b>Backtesting historis liga</b><span>Uji prediksi secara kronologis menggunakan data sebelum kickoff.</span></div>
+        <button className="secondary" type="button" onClick={() => void runBacktest()} disabled={!leagueId || backtestBusy}>{backtestBusy ? "Menguji data…" : "Jalankan backtest"}</button>
+      </div>
+      {backtestNotice && <div className="notice warning" role="status">{backtestNotice}</div>}
+      {backtest && <div className="backtest-results">
+        <div className="backtest-heading"><b>Hasil walk-forward · {selectedLeague?.name}</b><span>{backtest.predictions_evaluated} prediksi · {backtest.fixtures_skipped_insufficient_history} dilewati karena histori kurang</span></div>
+        <div className="backtest-metrics">
+          <div><span>Akurasi 1X2</span><strong>{backtest.metrics.accuracy_1x2 === null ? "—" : pct(backtest.metrics.accuracy_1x2)}</strong></div>
+          <div><span>Brier score ↓</span><strong>{backtest.metrics.brier_score_1x2?.toFixed(4) ?? "—"}</strong></div>
+          <div><span>Log loss ↓</span><strong>{backtest.metrics.log_loss_1x2?.toFixed(4) ?? "—"}</strong></div>
+          <div><span>Top correct score</span><strong>{backtest.metrics.top_correct_score_hit_rate === null ? "—" : pct(backtest.metrics.top_correct_score_hit_rate)}</strong></div>
+        </div>
+        <p>ROI, yield, drawdown, dan CLV belum dihitung karena database belum menyimpan odds historis serta closing odds.</p>
+        <small>{backtest.financial_metrics.unavailable_reason}</small>
+      </div>}
       <button className="primary" type="button" onClick={() => void runAnalysis()} disabled={!canAnalyze || busy || loading}>
         {busy ? "Menghitung probabilitas…" : "Analisis pertandingan"} <span>→</span>
       </button>
