@@ -46,6 +46,19 @@ def test_manual_catalog_crud_and_validation():
             bad = dict(fixture_payload, away_team_id=home.json()["id"])
             assert client.post("/api/v1/catalog/fixtures", json=bad).status_code == 422
             assert client.put("/api/v1/catalog/teams/999", json={"name": "Unknown"}).status_code == 404
+            # Referenced master data must be protected from accidental deletion.
+            assert client.delete(f"/api/v1/catalog/countries/{country_id}").status_code == 409
+            assert client.delete(f"/api/v1/catalog/leagues/{league_id}").status_code == 409
+            assert client.delete(f"/api/v1/catalog/seasons/{season_id}").status_code == 409
+            assert client.delete(f"/api/v1/catalog/teams/{home.json()['id']}").status_code == 409
+            # Delete leaf records first; then their now-unused parent records can be removed.
+            assert client.delete(f"/api/v1/catalog/fixtures/{fixture.json()['id']}").status_code == 200
+            assert client.delete(f"/api/v1/catalog/seasons/{season_id}").status_code == 200
+            assert client.delete(f"/api/v1/catalog/leagues/{league_id}").status_code == 200
+            assert client.delete(f"/api/v1/catalog/countries/{country_id}").status_code == 200
+            assert client.delete(f"/api/v1/catalog/teams/{home.json()['id']}").status_code == 200
+            assert client.delete(f"/api/v1/catalog/teams/{away.json()['id']}").status_code == 200
+            assert client.delete("/api/v1/catalog/teams/999").status_code == 404
     finally:
         app.dependency_overrides.clear()
         Base.metadata.drop_all(bind=engine)
