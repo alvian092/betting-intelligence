@@ -62,3 +62,30 @@ def post_odds_value(payload: OddsValueIn):
         )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+from app.services.analytics.backtest import run_chronological_backtest
+
+
+@router.get("/backtest")
+def get_chronological_backtest(
+    league_id: int = Query(ge=1),
+    min_league_matches: int = Query(10, ge=1, le=10000),
+    min_team_matches: int = Query(3, ge=1, le=1000),
+    prior_matches: float = Query(5.0, gt=0, le=1000),
+    rho: float = Query(0.0, ge=-1.0, le=1.0),
+    max_goals: int = Query(10, ge=1, le=20),
+    db: Session = Depends(get_db),
+):
+    """Evaluate historical 1X2 predictions using strict walk-forward training."""
+    if db.get(League, league_id) is None:
+        raise HTTPException(status_code=404, detail="Liga tidak ditemukan")
+    return run_chronological_backtest(
+        db,
+        league_id,
+        min_league_matches=min_league_matches,
+        min_team_matches=min_team_matches,
+        prior_matches=prior_matches,
+        rho=rho,
+        max_goals=max_goals,
+    )
