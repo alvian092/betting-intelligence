@@ -76,3 +76,29 @@ footer span{color:#c1a878}
 .history-item p{margin:10px 0 0}
 .empty-history,.sqlite-note{color:#93a2b2;font-size:12px;line-height:1.6}
 @media(max-width:640px){.nav-links{gap:9px;margin-right:8px}.nav-links a{font-size:8px}.history-main{align-items:flex-start;flex-direction:column}.history-stats{gap:8px}}
+
+
+.manual-panel{margin:0 0 22px}
+.manual-lead{font-size:12px;line-height:1.7;color:#93a2b2;margin:-10px 0 20px}
+.manual-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.manual-card{background:#0d1722;border:1px solid #2a3948;border-radius:8px;padding:16px;min-width:0}
+.manual-card h3{font-family:Manrope,sans-serif;font-size:13px;margin:0 0 14px;color:#e5edf4}
+.manual-card form{display:grid;gap:10px}
+.manual-card label{display:grid;gap:5px;color:#9eacbc;font-size:10px}
+.manual-card input,.manual-card select{width:100%;min-width:0;height:37px;padding:8px 9px;border:1px solid #344454;border-radius:5px;background:#111d2a;color:#edf2f7;font:12px 'DM Sans',sans-serif}
+.manual-card input:focus,.manual-card select:focus{outline:1px solid #c9ad78;border-color:#c9ad78}
+.manual-card input::placeholder{color:#617285}
+.manual-card .browse{justify-self:start;margin-top:2px}
+.form-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.score-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.mini-list{list-style:none;padding:0;margin:14px 0 0;border-top:1px solid #263544}
+.mini-list li{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #202e3c;color:#d6e0e9;font-size:11px}
+.mini-list small,.fixture-list small{color:#8394a5;font-size:9px;text-align:right}
+.fixture-card{grid-column:1/-1}
+.fixture-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+.fixture-list>div{display:flex;flex-direction:column;gap:5px;padding:9px;background:#111d2a;border-radius:5px;min-width:0}
+.fixture-list strong{font-size:10px;color:#dce5ec;overflow-wrap:anywhere}
+.fixture-list small{text-align:left}
+.manual-footnote{font-size:10px;line-height:1.6;color:#77899b;margin:14px 0 0}
+.manual-card button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:640px){.manual-grid{grid-template-columns:1fr}.fixture-card{grid-column:auto}.fixture-list{grid-template-columns:1fr}.form-pair{gap:6px}.manual-card{padding:13px}.manual-card input,.manual-card select{font-size:11px}.nav-links{gap:7px;margin-right:5px}.nav-links a{font-size:7px;letter-spacing:0}}
