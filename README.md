@@ -130,3 +130,18 @@ Football outcomes are uncertain. Model estimates depend on data quality, sample 
 ## Project status
 
 Early foundation stage. Features described above are project goals and are not all implemented yet.
+
+## Web app (development)
+
+The initial React + TypeScript import interface lives in `web/`.
+
+```bash
+cd web
+cp .env.example .env
+npm install
+npm run dev
+```
+
+By default the web app calls the API at `http://localhost:8000`. Change `VITE_API_BASE_URL` in `web/.env` when using another backend URL. Start the backend separately using the instructions in `backend/README.md`.
+
+The import screen accepts CSV and XLSX files and displays import counts or row-level validation errors returned by the backend. The API remains the source of truth for validation and duplicate detection.
