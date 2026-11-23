@@ -71,3 +71,37 @@ def test_cors_preflight_allows_vite_origin():
         )
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+
+
+def test_sqlite_export_and_reimport_round_trip():
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    TestingSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    Base.metadata.create_all(bind=engine)
+
+    def override_get_db():
+        db = TestingSession()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    try:
+        with TestClient(app) as client:
+            csv_data = (
+                "date,league,season,home_team,away_team,home_goals,away_goals\\n"
+                "2025-08-15,Premier League,2025-2026,Liverpool,Bournemouth,4,2\\n"
+            )
+            created = client.post("/api/v1/imports/fixtures/csv", files={"file": ("matches.csv", csv_data, "text/csv")})
+            assert created.status_code == 200
+            exported = client.get("/api/v1/imports/fixtures/export.sqlite")
+            assert exported.status_code == 200
+            assert exported.content[:16] == b"SQLite format 3\\x00"
+            imported = client.post("/api/v1/imports/fixtures/sqlite", files={"file": ("backup.sqlite", exported.content, "application/vnd.sqlite3")})
+            assert imported.status_code == 200
+            assert imported.json()["imported"] == 0
+            assert imported.json()["duplicates_skipped"] == 1
+    finally:
+        app.dependency_overrides.clear()
+        Base.metadata.drop_all(bind=engine)
+        engine.dispose()
