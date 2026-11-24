@@ -202,13 +202,14 @@ def calculate_financial_backtest(
         else:
             current_drawdown_bets = 0
 
-        ev_floor = min(20, max(0, int(chosen["ev"] * 100) // 5 * 5))
-        if chosen["ev"] >= 0.20:
-            ev_key = "≥20%"
-        elif ev_floor < 5:
+        if chosen["ev"] < 0.05:
             ev_key = "<5%"
+        elif chosen["ev"] < 0.10:
+            ev_key = "5–10%"
+        elif chosen["ev"] < 0.20:
+            ev_key = "10–20%"
         else:
-            ev_key = f"{ev_floor}–{ev_floor + 5}%"
+            ev_key = "≥20%"
         ev_group = ev_groups[ev_key]
         ev_group["bets"] += 1
         ev_group["stake"] += 1.0
