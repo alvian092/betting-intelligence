@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import math
-from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import Fixture, Season\nfrom app.services.analytics.financial_backtest import calculate_financial_backtest
+from app.db.models import Fixture, Season
+from app.services.analytics.financial_backtest import calculate_financial_backtest
 from app.services.analytics.lambda_model import InsufficientHistoryError, estimate_match_lambdas
 from app.services.analytics.match_analysis import analyze_pre_match
 
@@ -20,6 +20,7 @@ def run_chronological_backtest(
     prior_matches: float = 5.0,
     rho: float = 0.0,
     max_goals: int = 10,
+    min_ev: float = 0.02,
 ) -> dict:
     """Replay finished fixtures in kickoff order using only strictly earlier results."""
     fixtures = list(db.scalars(
@@ -30,6 +31,7 @@ def run_chronological_backtest(
     ))
     predictions = []
     skipped = 0
+    fixtures_by_id = {fixture.id: fixture for fixture in fixtures}
     for fixture in fixtures:
         if fixture.home_goals is None or fixture.away_goals is None:
             skipped += 1
@@ -91,6 +93,7 @@ def run_chronological_backtest(
         accuracy = mean_brier = mean_log_loss = top_score_hit_rate = None
         start_date = end_date = None
 
+    financial = calculate_financial_backtest(db, predictions, fixtures_by_id, min_ev=min_ev)
     return {
         "model": "poisson_dixon_coles_v1",
         "method": "strict_chronological_walk_forward",
@@ -105,13 +108,7 @@ def run_chronological_backtest(
             "log_loss_1x2": mean_log_loss,
             "top_correct_score_hit_rate": top_score_hit_rate,
         },
-        "financial_metrics": {
-            "roi": None,
-            "yield": None,
-            "max_drawdown": None,
-            "clv": None,
-            "unavailable_reason": "Historical bookmaker odds and closing prices are not stored for these fixtures. Financial metrics are intentionally not fabricated.",
-        },
+        "financial_metrics": financial,
         "predictions": predictions,
         "warning": "Historical evaluation is not a guarantee of future performance. Results are provisional and depend on data quality.",
     }
