@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Fixture, Season
 from app.services.analytics.financial_backtest import calculate_financial_backtest
+from app.services.analytics.calibration import evaluate_calibration
 from app.services.analytics.lambda_model import InsufficientHistoryError, estimate_match_lambdas
 from app.services.analytics.match_analysis import analyze_pre_match
 
@@ -108,6 +109,7 @@ def run_chronological_backtest(
             "log_loss_1x2": mean_log_loss,
             "top_correct_score_hit_rate": top_score_hit_rate,
         },
+        "calibration": evaluate_calibration(predictions),
         "financial_metrics": financial,
         "predictions": predictions,
         "warning": "Historical evaluation is not a guarantee of future performance. Results are provisional and depend on data quality.",
