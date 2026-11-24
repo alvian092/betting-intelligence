@@ -247,7 +247,21 @@ def calculate_financial_backtest(
                 "equity_curve": kelly_curve,
             },
         },
+        "risk_diagnostics": {
+            "longest_losing_streak": longest_losing_streak,
+            "longest_drawdown_bets": longest_drawdown_bets,
+            "initial_bankroll_units": INITIAL_BANKROLL,
+        },
+        "calibration": {
+            "top_outcome_confidence": [
+                {"band": key, "count": value["count"],
+                 "mean_confidence": value["confidence"] / value["count"],
+                 "accuracy": value["correct"] / value["count"]}
+                for key, value in sorted(confidence_groups.items())
+            ],
+        },
         "breakdowns": {
+            "expected_value": grouped_rows(ev_groups),
             "league": [{"key": str(league_id) if league_id is not None else "current", "bets": count,
                         "stake_units": flat_summary["total_staked_units"], "profit_units": flat_summary["profit_units"],
                         "roi": flat_summary["roi"]}],
