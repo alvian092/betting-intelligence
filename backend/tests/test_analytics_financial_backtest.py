@@ -150,7 +150,7 @@ def test_financial_backtest_reports_ev_bands_calibration_and_risk_diagnostics(db
     }
     result = calculate_financial_backtest(db, [prediction], {fixture.id: fixture}, league_id=7)
 
-    assert result["breakdowns"]["expected_value"][0]["key"] == "10–20%"
+    assert result["breakdowns"]["expected_value"][0]["key"] == "≥20%"
     assert result["breakdowns"]["expected_value"][0]["bets"] == 1
     calibration = result["calibration"]["top_outcome_confidence"]
     assert calibration[0]["count"] == 1
