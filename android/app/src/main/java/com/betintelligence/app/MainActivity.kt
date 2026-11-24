@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +19,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DarkColorScheme
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -281,9 +281,7 @@ private fun OptionDropdown(label: String, selected: CatalogOption?, options: Lis
             readOnly = true,
             singleLine = true
         )
-        Box(Modifier.matchParentSize().background(Color.Transparent).padding(1.dp)) {
-            androidx.compose.foundation.clickable(onClick = { expanded = true })
-        }
+        Box(Modifier.matchParentSize().clickable { expanded = true })
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.fillMaxWidth(0.9f)) {
             options.forEach { option ->
                 DropdownMenuItem(text = { Text(option.name) }, onClick = {
@@ -297,7 +295,7 @@ private fun OptionDropdown(label: String, selected: CatalogOption?, options: Lis
 
 @Composable
 private fun Metric(label: String, value: Double) {
-    Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = Color(0xFF1B2B40))) {
+    Card(modifier = Modifier.fillMaxWidth(0.48f), colors = CardDefaults.cardColors(containerColor = Color(0xFF1B2B40))) {
         Column(Modifier.padding(12.dp)) {
             Text(label, color = Color(0xFF9EACC0), fontSize = 12.sp)
             Text("%.3f".format(value), fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -307,7 +305,7 @@ private fun Metric(label: String, value: Double) {
 
 @Composable
 private fun Probability(label: String, value: Double) {
-    Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = Color(0xFF1B2B40))) {
+    Card(modifier = Modifier.fillMaxWidth(0.31f), colors = CardDefaults.cardColors(containerColor = Color(0xFF1B2B40))) {
         Column(Modifier.padding(10.dp)) {
             Text(label, color = Color(0xFF9EACC0))
             Text("${"%.1f".format(value * 100)}%", fontSize = 20.sp, fontWeight = FontWeight.Bold)
