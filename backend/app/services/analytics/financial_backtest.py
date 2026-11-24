@@ -52,6 +52,7 @@ def calculate_financial_backtest(
     equity = 100.0
     peak = equity
     max_drawdown = 0.0
+    max_drawdown_ratio = 0.0
 
     for prediction in predictions:
         fixture = fixtures_by_id[prediction["fixture_id"]]
@@ -115,6 +116,7 @@ def calculate_financial_backtest(
         peak = max(peak, equity)
         drawdown = peak - equity
         max_drawdown = max(max_drawdown, drawdown)
+        max_drawdown_ratio = max(max_drawdown_ratio, drawdown / peak if peak else 0.0)
         bets.append({
             "fixture_id": fixture.id,
             "kickoff_at": fixture.kickoff_at.isoformat(),
@@ -145,7 +147,9 @@ def calculate_financial_backtest(
         "roi": roi,
         "yield": roi,
         "max_drawdown_units": max_drawdown,
-        "max_drawdown_percent_of_peak_bankroll": max_drawdown / 100.0,
+        "max_drawdown": max_drawdown_ratio,
+        "max_drawdown_percent_of_peak_bankroll": max_drawdown_ratio,
+        "clv": average_clv,
         "clv_probability_points": average_clv,
         "clv_definition": "closing no-vig implied probability minus taken implied probability; positive is favorable",
         "bets": bets,
