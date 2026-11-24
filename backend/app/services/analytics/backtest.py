@@ -93,7 +93,7 @@ def run_chronological_backtest(
         accuracy = mean_brier = mean_log_loss = top_score_hit_rate = None
         start_date = end_date = None
 
-    financial = calculate_financial_backtest(db, predictions, fixtures_by_id, min_ev=min_ev)
+    financial = calculate_financial_backtest(db, predictions, fixtures_by_id, min_ev=min_ev, league_id=league_id)
     return {
         "model": "poisson_dixon_coles_v1",
         "method": "strict_chronological_walk_forward",
