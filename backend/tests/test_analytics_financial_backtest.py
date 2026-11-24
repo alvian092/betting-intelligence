@@ -138,3 +138,39 @@ def test_quarter_kelly_stake_is_capped_at_five_percent_of_bankroll(db):
     }
     result = calculate_financial_backtest(db, [prediction], {fixture.id: fixture})
     assert result["bets"][0]["quarter_kelly_stake_units"] == pytest.approx(5.0)
+
+
+def test_financial_backtest_reports_ev_bands_calibration_and_risk_diagnostics(db):
+    fixture, bookmaker = seed_fixture(db)
+    add_snapshot(db, fixture, bookmaker, fixture.kickoff_at - timedelta(hours=2), "current",
+                 {"home": 2.0, "draw": 4.0, "away": 5.0})
+    prediction = {
+        "fixture_id": fixture.id, "actual": "home",
+        "probabilities": {"home": 0.7, "draw": 0.2, "away": 0.1},
+    }
+    result = calculate_financial_backtest(db, [prediction], {fixture.id: fixture}, league_id=7)
+
+    assert result["breakdowns"]["expected_value"][0]["key"] == "10–20%"
+    assert result["breakdowns"]["expected_value"][0]["bets"] == 1
+    calibration = result["calibration"]["top_outcome_confidence"]
+    assert calibration[0]["count"] == 1
+    assert calibration[0]["mean_confidence"] == pytest.approx(0.7)
+    assert calibration[0]["accuracy"] == pytest.approx(1.0)
+    assert result["risk_diagnostics"]["longest_losing_streak"] == 0
+    assert result["risk_diagnostics"]["longest_drawdown_bets"] == 0
+    assert result["risk_diagnostics"]["initial_bankroll_units"] == 100.0
+
+
+def test_quarter_kelly_reports_zero_stakes_after_bankroll_depletion(db):
+    fixture, bookmaker = seed_fixture(db)
+    add_snapshot(db, fixture, bookmaker, fixture.kickoff_at - timedelta(hours=2), "current",
+                 {"home": 2.0, "draw": 4.0, "away": 5.0})
+    prediction = {
+        "fixture_id": fixture.id, "actual": "away",
+        "probabilities": {"home": 0.7, "draw": 0.2, "away": 0.1},
+    }
+    result = calculate_financial_backtest(db, [prediction], {fixture.id: fixture})
+    assert result["strategies"]["quarter_kelly"]["bets_placed"] == 1
+    assert result["strategies"]["quarter_kelly"]["total_staked_units"] == pytest.approx(
+        result["bets"][0]["quarter_kelly_stake_units"]
+    )
