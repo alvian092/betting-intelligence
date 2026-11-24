@@ -234,3 +234,16 @@ button.secondary:disabled{opacity:.45;cursor:not-allowed}
 .odds-import-result{grid-template-columns:repeat(3,minmax(0,1fr))}
 .odds-import-result strong{font-size:20px}
 @media(max-width:640px){.odds-import-form{grid-template-columns:1fr}.odds-import-form .browse{justify-self:start}.odds-import-result{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+
+/* Financial backtesting v1.2 */
+.equity-list{display:grid;gap:7px;margin:10px 0 16px}
+.equity-point{display:grid;grid-template-columns:52px minmax(0,1fr) 68px;gap:9px;align-items:center;font:10px 'DM Mono',monospace;color:#9aabbd}
+.equity-point>div{height:9px;background:#202d3b;border-radius:9px;overflow:hidden}
+.equity-point i{display:block;height:100%;background:#c9ad78;border-radius:9px}
+.equity-point b{text-align:right;color:#e1c58e;font-weight:500}
+.financial-breakdown{display:grid;gap:6px;margin:8px 0 14px}
+.financial-breakdown>div{display:flex;justify-content:space-between;gap:10px;padding:10px 11px;border:1px solid #2a3948;background:#0d1722;border-radius:5px;font-size:10px}
+.financial-breakdown span{color:#9aabbd}
+.financial-breakdown b{color:#e0c28a;font-family:'DM Mono',monospace;font-size:10px;text-align:right}
+@media(max-width:640px){.equity-point{grid-template-columns:42px minmax(0,1fr) 60px}.financial-breakdown>div{align-items:flex-start;flex-direction:column}.financial-breakdown b{text-align:left}}
