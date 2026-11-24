@@ -71,7 +71,8 @@ def _summary(stakes: list[float], profits: list[float], initial: float) -> dict:
         curve.append({"bankroll_units": bankroll})
     drawdown_units, drawdown_ratio = _drawdown(curve, initial)
     return {
-        "bets_placed": len(stakes),
+        "bets_placed": sum(1 for stake in stakes if stake > 0),
+        "bet_opportunities": len(stakes),
         "total_staked_units": staked,
         "profit_units": profit,
         "roi": profit / staked if staked else None,
@@ -113,6 +114,18 @@ def calculate_financial_backtest(
     for prediction in predictions:
         fixture = fixtures_by_id[prediction["fixture_id"]]
         kickoff = _utc(fixture.kickoff_at)
+        probabilities = prediction["probabilities"]
+
+        # Confidence calibration covers every evaluated prediction, not only bets.
+        top_outcome = max(OUTCOMES, key=lambda outcome: probabilities[outcome])
+        confidence = float(probabilities[top_outcome])
+        confidence_floor = min(90, max(0, int(confidence * 100) // 10 * 10))
+        confidence_key = f"{confidence_floor}–{confidence_floor + 10}%"
+        calibration = confidence_groups[confidence_key]
+        calibration["count"] += 1
+        calibration["confidence"] += confidence
+        calibration["correct"] += int(prediction["actual"] == top_outcome)
+
         quotes = list(db.scalars(
             select(OddsQuote).where(
                 OddsQuote.fixture_id == fixture.id,
@@ -123,7 +136,6 @@ def calculate_financial_backtest(
         decision_snapshots = _latest_per_bookmaker(_complete_snapshots(
             quotes, allowed_types={"opening", "current"}, kickoff=kickoff, strict_before=True
         ))
-        probabilities = prediction["probabilities"]
         candidates = []
         for snapshot in decision_snapshots:
             implied = {outcome: 1.0 / snapshot[outcome] for outcome in OUTCOMES}
@@ -165,18 +177,42 @@ def calculate_financial_backtest(
         probability = probabilities[chosen["outcome"]]
         full_kelly = max(0.0, (probability * chosen["odds"] - 1.0) / (chosen["odds"] - 1.0))
         kelly_fraction = min(FRACTIONAL_KELLY * full_kelly, MAX_KELLY_STAKE_FRACTION)
-        kelly_stake = min(kelly_bankroll * kelly_fraction, kelly_bankroll)
+        kelly_stake = min(kelly_bankroll * kelly_fraction, kelly_bankroll) if kelly_bankroll > 0 else 0.0
         kelly_profit = kelly_stake * (chosen["odds"] - 1.0) if won else -kelly_stake
 
         flat_stakes.append(1.0)
         flat_profits.append(flat_profit)
         flat_equity += flat_profit
         flat_curve.append({"fixture_id": fixture.id, "bankroll_units": flat_equity})
-        if kelly_stake > 0 and kelly_bankroll > 0:
-            kelly_stakes.append(kelly_stake)
-            kelly_profits.append(kelly_profit)
+        kelly_stakes.append(kelly_stake)
+        kelly_profits.append(kelly_profit)
+        if kelly_stake > 0:
             kelly_bankroll += kelly_profit
         kelly_curve.append({"fixture_id": fixture.id, "bankroll_units": kelly_bankroll})
+
+        if flat_profit < 0:
+            current_losing_streak += 1
+            longest_losing_streak = max(longest_losing_streak, current_losing_streak)
+        else:
+            current_losing_streak = 0
+        flat_peak = max(flat_peak, flat_equity)
+        if flat_equity < flat_peak:
+            current_drawdown_bets += 1
+            longest_drawdown_bets = max(longest_drawdown_bets, current_drawdown_bets)
+        else:
+            current_drawdown_bets = 0
+
+        ev_floor = min(20, max(0, int(chosen["ev"] * 100) // 5 * 5))
+        if chosen["ev"] >= 0.20:
+            ev_key = "≥20%"
+        elif ev_floor < 5:
+            ev_key = "<5%"
+        else:
+            ev_key = f"{ev_floor}–{ev_floor + 5}%"
+        ev_group = ev_groups[ev_key]
+        ev_group["bets"] += 1
+        ev_group["stake"] += 1.0
+        ev_group["profit"] += flat_profit
 
         bookmaker_key = str(chosen["bookmaker_id"])
         group = bookmaker_groups[bookmaker_key]
