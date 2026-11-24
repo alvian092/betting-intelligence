@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import Fixture, Season
+from app.db.models import Fixture, Season\nfrom app.services.analytics.financial_backtest import calculate_financial_backtest
 from app.services.analytics.lambda_model import InsufficientHistoryError, estimate_match_lambdas
 from app.services.analytics.match_analysis import analyze_pre_match
 
