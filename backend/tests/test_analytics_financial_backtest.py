@@ -86,3 +86,18 @@ def test_financial_backtest_never_uses_quotes_captured_at_or_after_kickoff_for_d
     assert result["fixtures_without_qualifying_odds"] == 1
     assert result["roi"] is None
     assert result["clv_probability_points"] is None
+
+
+def test_financial_backtest_uses_latest_complete_snapshot_not_best_historical_price(db):
+    fixture, bookmaker = seed_fixture(db)
+    add_snapshot(db, fixture, bookmaker, fixture.kickoff_at - timedelta(hours=3), "opening",
+                 {"home": 2.0, "draw": 4.0, "away": 5.0})
+    add_snapshot(db, fixture, bookmaker, fixture.kickoff_at - timedelta(hours=1), "current",
+                 {"home": 1.4, "draw": 4.0, "away": 5.0})
+    prediction = {
+        "fixture_id": fixture.id, "actual": "home",
+        "probabilities": {"home": 0.7, "draw": 0.2, "away": 0.1},
+    }
+    result = calculate_financial_backtest(db, [prediction], {fixture.id: fixture})
+    assert result["bets_placed"] == 0
+    assert result["fixtures_without_qualifying_odds"] == 1
