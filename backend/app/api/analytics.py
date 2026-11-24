@@ -75,9 +75,10 @@ def get_chronological_backtest(
     prior_matches: float = Query(5.0, gt=0, le=1000),
     rho: float = Query(0.0, ge=-1.0, le=1.0),
     max_goals: int = Query(10, ge=1, le=20),
+    min_ev: float = Query(0.02, ge=0, lt=1),
     db: Session = Depends(get_db),
 ):
-    """Evaluate historical 1X2 predictions using strict walk-forward training."""
+    """Evaluate 1X2 predictions and historical odds using strict walk-forward training."""
     if db.get(League, league_id) is None:
         raise HTTPException(status_code=404, detail="Liga tidak ditemukan")
     return run_chronological_backtest(
@@ -88,4 +89,5 @@ def get_chronological_backtest(
         prior_matches=prior_matches,
         rho=rho,
         max_goals=max_goals,
+        min_ev=min_ev,
     )
