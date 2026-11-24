@@ -36,6 +36,15 @@ def _complete_snapshots(quotes: list[OddsQuote], *, allowed_types: set[str], kic
     ]
 
 
+def _latest_per_bookmaker(snapshots: list[dict]) -> list[dict]:
+    latest = {}
+    for snapshot in snapshots:
+        bookmaker_id = snapshot["bookmaker_id"]
+        if bookmaker_id not in latest or snapshot["captured_at"] > latest[bookmaker_id]["captured_at"]:
+            latest[bookmaker_id] = snapshot
+    return list(latest.values())
+
+
 def calculate_financial_backtest(
     db: Session,
     predictions: list[dict],
@@ -64,9 +73,9 @@ def calculate_financial_backtest(
                 OddsQuote.quote_type.in_(("opening", "current", "closing")),
             )
         ))
-        decision_snapshots = _complete_snapshots(
+        decision_snapshots = _latest_per_bookmaker(_complete_snapshots(
             quotes, allowed_types={"opening", "current"}, kickoff=kickoff, strict_before=True
-        )
+        ))
         probabilities = prediction["probabilities"]
         candidates = []
         for snapshot in decision_snapshots:
