@@ -88,6 +88,7 @@ def calculate_financial_backtest(
     fixtures_by_id: dict[int, Fixture],
     *,
     min_ev: float = 0.02,
+    league_id: int | None = None,
 ) -> dict:
     """Evaluate pre-kickoff 1X2 odds with flat-stake and capped quarter-Kelly simulations."""
     bets = []
@@ -240,7 +241,7 @@ def calculate_financial_backtest(
             },
         },
         "breakdowns": {
-            "league": [{"key": str(predictions[0].get("league_id", "")) if predictions else "", "bets": count,
+            "league": [{"key": str(league_id) if league_id is not None else "current", "bets": count,
                         "stake_units": flat_summary["total_staked_units"], "profit_units": flat_summary["profit_units"],
                         "roi": flat_summary["roi"]}],
             "bookmaker": grouped_rows(bookmaker_groups),
