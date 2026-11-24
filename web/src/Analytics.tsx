@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 type Option = { id: number; name: string };
 type MarketPair = { home: number; draw: number; away: number };
 type ValueResult = { bookmaker_margin_percent: number; selections: Array<{ name: string; no_vig_probability: number; model_fair_odds: number; ev: number; edge: number; recommended_stake_fraction: number; decision: "VALUE" | "NO_BET" }> };
-type BacktestResult = { fixtures_considered: number; predictions_evaluated: number; fixtures_skipped_insufficient_history: number; period: { from: string | null; to: string | null }; metrics: { accuracy_1x2: number | null; brier_score_1x2: number | null; log_loss_1x2: number | null; top_correct_score_hit_rate: number | null }; financial_metrics: { strategy: string; minimum_ev: number; bets_placed: number; fixtures_without_qualifying_odds: number; closing_odds_coverage: number; total_staked_units: number; profit_units: number; roi: number | null; yield: number | null; max_drawdown_units: number; max_drawdown_percent_of_peak_bankroll: number; clv_probability_points: number | null; unavailable_reason: string | null; warning: string } };
+type BacktestResult = { fixtures_considered: number; predictions_evaluated: number; fixtures_skipped_insufficient_history: number; period: { from: string | null; to: string | null }; metrics: { accuracy_1x2: number | null; brier_score_1x2: number | null; log_loss_1x2: number | null; top_correct_score_hit_rate: number | null }; financial_metrics: { strategy: string; minimum_ev: number; bets_placed: number; fixtures_without_qualifying_odds: number; closing_odds_coverage: number; total_staked_units: number; profit_units: number; roi: number | null; yield: number | null; max_drawdown_units: number; max_drawdown_percent_of_peak_bankroll: number; clv_probability_points: number | null; unavailable_reason: string | null; warning: string; strategies: { flat_stake: { total_staked_units: number; profit_units: number; roi: number | null; ending_bankroll_units: number; max_drawdown_percent_of_peak_bankroll: number; equity_curve: Array<{ fixture_id: number | null; bankroll_units: number }> }; quarter_kelly: { total_staked_units: number; profit_units: number; roi: number | null; ending_bankroll_units: number; max_drawdown_percent_of_peak_bankroll: number; fraction: number; max_bankroll_fraction_per_bet: number; equity_curve: Array<{ fixture_id: number | null; bankroll_units: number }> } }; breakdowns: { league: Array<{ key: string; bets: number; profit_units: number; roi: number | null }>; bookmaker: Array<{ key: string; bets: number; profit_units: number; roi: number | null }>; month: Array<{ key: string; bets: number; profit_units: number; roi: number | null }> } } };
 type Analysis = {
   model: string;
   status: string;
@@ -157,6 +157,19 @@ export default function Analytics() {
         </div>
         <small>{backtest.financial_metrics.unavailable_reason || `Flat stake 1 unit · EV minimum ${(backtest.financial_metrics.minimum_ev * 100).toFixed(1)}% · ${backtest.financial_metrics.fixtures_without_qualifying_odds} fixture tanpa odds value.`}</small>
         <small>{backtest.financial_metrics.warning}</small>
+        <h3>Perbandingan strategi · bankroll awal 100u</h3>
+        <div className="backtest-metrics financial-metrics">
+          <div><span>Flat stake · ROI</span><strong>{backtest.financial_metrics.strategies.flat_stake.roi === null ? "—" : pct(backtest.financial_metrics.strategies.flat_stake.roi)}</strong></div>
+          <div><span>Flat stake · akhir</span><strong>{backtest.financial_metrics.strategies.flat_stake.ending_bankroll_units.toFixed(2)}u</strong></div>
+          <div><span>¼ Kelly · ROI</span><strong>{backtest.financial_metrics.strategies.quarter_kelly.roi === null ? "—" : pct(backtest.financial_metrics.strategies.quarter_kelly.roi)}</strong></div>
+          <div><span>¼ Kelly · akhir</span><strong>{backtest.financial_metrics.strategies.quarter_kelly.ending_bankroll_units.toFixed(2)}u</strong></div>
+        </div>
+        <h3>Equity curve · quarter-Kelly</h3>
+        <div className="equity-list">{backtest.financial_metrics.strategies.quarter_kelly.equity_curve.map((point, index) => <div className="equity-point" key={index}><span>{point.fixture_id === null ? "Mulai" : `#${point.fixture_id}`}</span><div><i style={{ width: `${Math.max(0, Math.min(100, point.bankroll_units / Math.max(100, ...backtest.financial_metrics.strategies.quarter_kelly.equity_curve.map((item) => item.bankroll_units)) * 100))}%` }} /></div><b>{point.bankroll_units.toFixed(2)}u</b></div>)}</div>
+        <h3>Performa per bookmaker</h3>
+        <div className="financial-breakdown">{backtest.financial_metrics.breakdowns.bookmaker.length ? backtest.financial_metrics.breakdowns.bookmaker.map((item) => <div key={item.key}><span>Bookmaker #{item.key} · {item.bets} bet</span><b>{item.profit_units.toFixed(2)}u · {item.roi === null ? "—" : pct(item.roi)} ROI</b></div>) : <small>Belum ada taruhan yang memenuhi kriteria.</small>}</div>
+        <h3>Performa bulanan</h3>
+        <div className="financial-breakdown">{backtest.financial_metrics.breakdowns.month.length ? backtest.financial_metrics.breakdowns.month.map((item) => <div key={item.key}><span>{item.key} · {item.bets} bet</span><b>{item.profit_units.toFixed(2)}u · {item.roi === null ? "—" : pct(item.roi)} ROI</b></div>) : <small>Belum ada data bulanan.</small>}</div>
       </div>}
       <button className="primary" type="button" onClick={() => void runAnalysis()} disabled={!canAnalyze || busy || loading}>
         {busy ? "Menghitung probabilitas…" : "Analisis pertandingan"} <span>→</span>
