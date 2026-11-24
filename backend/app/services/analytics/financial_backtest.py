@@ -102,6 +102,13 @@ def calculate_financial_backtest(
     kelly_curve = [{"fixture_id": None, "bankroll_units": INITIAL_BANKROLL}]
     bookmaker_groups = defaultdict(lambda: {"bets": 0, "stake": 0.0, "profit": 0.0})
     period_groups = defaultdict(lambda: {"bets": 0, "stake": 0.0, "profit": 0.0})
+    ev_groups = defaultdict(lambda: {"bets": 0, "stake": 0.0, "profit": 0.0})
+    confidence_groups = defaultdict(lambda: {"count": 0, "confidence": 0.0, "correct": 0})
+    current_losing_streak = 0
+    longest_losing_streak = 0
+    current_drawdown_bets = 0
+    longest_drawdown_bets = 0
+    flat_peak = INITIAL_BANKROLL
 
     for prediction in predictions:
         fixture = fixtures_by_id[prediction["fixture_id"]]
