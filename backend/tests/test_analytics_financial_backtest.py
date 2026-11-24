@@ -101,3 +101,40 @@ def test_financial_backtest_uses_latest_complete_snapshot_not_best_historical_pr
     result = calculate_financial_backtest(db, [prediction], {fixture.id: fixture})
     assert result["bets_placed"] == 0
     assert result["fixtures_without_qualifying_odds"] == 1
+
+
+def test_financial_backtest_compares_flat_and_capped_quarter_kelly(db):
+    fixture, bookmaker = seed_fixture(db)
+    add_snapshot(db, fixture, bookmaker, fixture.kickoff_at - timedelta(hours=2), "current",
+                 {"home": 2.0, "draw": 4.0, "away": 5.0})
+    prediction = {
+        "fixture_id": fixture.id, "actual": "home",
+        "probabilities": {"home": 0.7, "draw": 0.2, "away": 0.1},
+    }
+    result = calculate_financial_backtest(db, [prediction], {fixture.id: fixture}, league_id=7)
+    flat = result["strategies"]["flat_stake"]
+    kelly = result["strategies"]["quarter_kelly"]
+
+    assert flat["stake_per_bet_units"] == 1.0
+    assert flat["bets_placed"] == 1
+    assert flat["profit_units"] == pytest.approx(1.0)
+    assert kelly["fraction"] == 0.25
+    assert 0 < result["bets"][0]["quarter_kelly_stake_units"] <= 5.0
+    assert kelly["profit_units"] > 0
+    assert len(flat["equity_curve"]) == 2
+    assert len(kelly["equity_curve"]) == 2
+    assert result["breakdowns"]["league"][0]["key"] == "7"
+    assert result["breakdowns"]["bookmaker"][0]["key"] == str(bookmaker.id)
+    assert result["breakdowns"]["month"][0]["key"] == "2026-11"
+
+
+def test_quarter_kelly_stake_is_capped_at_five_percent_of_bankroll(db):
+    fixture, bookmaker = seed_fixture(db)
+    add_snapshot(db, fixture, bookmaker, fixture.kickoff_at - timedelta(hours=2), "current",
+                 {"home": 2.0, "draw": 4.0, "away": 5.0})
+    prediction = {
+        "fixture_id": fixture.id, "actual": "home",
+        "probabilities": {"home": 0.99, "draw": 0.009, "away": 0.001},
+    }
+    result = calculate_financial_backtest(db, [prediction], {fixture.id: fixture})
+    assert result["bets"][0]["quarter_kelly_stake_units"] == pytest.approx(5.0)
