@@ -66,7 +66,7 @@ def test_walk_forward_backtest_excludes_fixtures_without_prior_history(db):
     assert result["metrics"]["brier_score_1x2"] >= 0
     assert result["metrics"]["log_loss_1x2"] >= 0
     assert result["financial_metrics"]["roi"] is None
-    assert "not stored" in result["financial_metrics"]["unavailable_reason"]
+    assert "snapshot odds" in result["financial_metrics"]["unavailable_reason"]
 
 
 def test_backtest_returns_null_metrics_when_no_fixture_has_enough_history(db):
