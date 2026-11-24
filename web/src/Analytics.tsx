@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 type Option = { id: number; name: string };
 type MarketPair = { home: number; draw: number; away: number };
 type ValueResult = { bookmaker_margin_percent: number; selections: Array<{ name: string; no_vig_probability: number; model_fair_odds: number; ev: number; edge: number; recommended_stake_fraction: number; decision: "VALUE" | "NO_BET" }> };
-type BacktestResult = { fixtures_considered: number; predictions_evaluated: number; fixtures_skipped_insufficient_history: number; period: { from: string | null; to: string | null }; metrics: { accuracy_1x2: number | null; brier_score_1x2: number | null; log_loss_1x2: number | null; top_correct_score_hit_rate: number | null }; financial_metrics: { roi: number | null; yield: number | null; max_drawdown: number | null; clv: number | null; unavailable_reason: string } };
+type BacktestResult = { fixtures_considered: number; predictions_evaluated: number; fixtures_skipped_insufficient_history: number; period: { from: string | null; to: string | null }; metrics: { accuracy_1x2: number | null; brier_score_1x2: number | null; log_loss_1x2: number | null; top_correct_score_hit_rate: number | null }; financial_metrics: { strategy: string; minimum_ev: number; bets_placed: number; fixtures_without_qualifying_odds: number; closing_odds_coverage: number; total_staked_units: number; profit_units: number; roi: number | null; yield: number | null; max_drawdown_units: number; max_drawdown_percent_of_peak_bankroll: number; clv_probability_points: number | null; unavailable_reason: string | null; warning: string } };
 type Analysis = {
   model: string;
   status: string;
@@ -146,8 +146,17 @@ export default function Analytics() {
           <div><span>Log loss ↓</span><strong>{backtest.metrics.log_loss_1x2?.toFixed(4) ?? "—"}</strong></div>
           <div><span>Top correct score</span><strong>{backtest.metrics.top_correct_score_hit_rate === null ? "—" : pct(backtest.metrics.top_correct_score_hit_rate)}</strong></div>
         </div>
-        <p>ROI, yield, drawdown, dan CLV belum dihitung karena database belum menyimpan odds historis serta closing odds.</p>
-        <small>{backtest.financial_metrics.unavailable_reason}</small>
+        <h3>Financial backtest · 1X2</h3>
+        <div className="backtest-metrics financial-metrics">
+          <div><span>Bet terpilih</span><strong>{backtest.financial_metrics.bets_placed}</strong></div>
+          <div><span>ROI / Yield</span><strong>{backtest.financial_metrics.roi === null ? "—" : pct(backtest.financial_metrics.roi)}</strong></div>
+          <div><span>Profit / Loss</span><strong>{backtest.financial_metrics.profit_units.toFixed(2)} u</strong></div>
+          <div><span>Max drawdown</span><strong>{pct(backtest.financial_metrics.max_drawdown_percent_of_peak_bankroll)}</strong></div>
+          <div><span>CLV rata-rata</span><strong>{backtest.financial_metrics.clv_probability_points === null ? "—" : `${(backtest.financial_metrics.clv_probability_points * 100).toFixed(2)} pp`}</strong></div>
+          <div><span>Closing coverage</span><strong>{backtest.financial_metrics.closing_odds_coverage}/{backtest.financial_metrics.bets_placed}</strong></div>
+        </div>
+        <small>{backtest.financial_metrics.unavailable_reason || `Flat stake 1 unit · EV minimum ${(backtest.financial_metrics.minimum_ev * 100).toFixed(1)}% · ${backtest.financial_metrics.fixtures_without_qualifying_odds} fixture tanpa odds value.`}</small>
+        <small>{backtest.financial_metrics.warning}</small>
       </div>}
       <button className="primary" type="button" onClick={() => void runAnalysis()} disabled={!canAnalyze || busy || loading}>
         {busy ? "Menghitung probabilitas…" : "Analisis pertandingan"} <span>→</span>
